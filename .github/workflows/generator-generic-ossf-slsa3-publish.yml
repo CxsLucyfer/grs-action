@@ -1,0 +1,2509 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# This workflow lets you generate SLSA provenance file for your project.
+# The generation satisfies level 3 for the provenance requirements - see https://slsa.dev/spec/v0.1/requirements
+# The project is an initiative of the OpenSSF (openssf.org) and is developed at
+# https://github.com/slsa-framework/slsa-github-generator.
+# The provenance file can be verified using https://github.com/slsa-framework/slsa-verifier.
+# For more information about SLSA and how it improves the supply-chain, visit slsa.dev.
+
+name: SLSA generic generator
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      digests: ${{ steps.hash.outputs.digests }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # ========================================================
+      #
+      # Step 1: Build your artifacts.
+      #
+      # ========================================================
+      - name: Build artifacts
+        run: |
+            # These are some amazing artifacts.
+            echo "artifact1" > artifact1
+            echo "artifact2" > artifact2
+
+      # ========================================================
+      #
+      # Step 2: Add a step to generate the provenance subjects
+      #         as shown below. Update the sha256 sum arguments
+      #         to include all binaries that you generate
+      #         provenance for.
+      #
+      # ========================================================
+      - name: Generate subject for provenance
+        id: hash
+        run: |
+          set -euo pipefail
+
+          # List the artifacts the provenance will refer to.
+          files=$(ls artifact*)
+          # Generate the subjects (base64 encoded).
+          echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read   # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.digests }}"
+      upload-assets: true # Optional: Upload to a new release
+- name: Cache
+  uses: actions/cache@v1.2.1
+  with:
+    # A directory to store and save the cache
+    path: 
+    # An explicit key for restoring and saving the cache
+    key: 
+    # An ordered list of keys to use for restoring the cache if no cache hit occurred for key
+    restore-keys: # optional
+    - name: Remove EXIF GPS Tags
+  # You may pin to the exact commit or the version.
+  # uses: maxwellpeterson/exif-gps-action@006b103143ec061b20a46bcc8800629e85a4982c
+  uses: maxwellpeterson/exif-gps-action@v1.0.0 
+  - name: Browser Platform Publisher
+  # You may pin to the exact commit or the version.
+  # uses: PlasmoHQ/bpp@ba887a93e8ed778819c630e0e943f06190e4545d
+  uses: PlasmoHQ/bpp@v3.5.0
+  with:
+    # A JSON string containing the keys to be used for the submission process. (This should be a secret)
+    keys: 
+    # The extension zip artifact to be published.
+    artifact: # optional
+    # This is an alias to artifact argument.
+    zip: # optional
+    # This is an alias to artifact argument.
+    file: # optional
+    # The path to the Chrome extension zip file.
+    chrome-file: # optional
+    # The path to the Firefox extension zip file.
+    firefox-file: # optional
+    # The path to the Edge extension zip file.
+    edge-file: # optional
+    # The path to the Opera extension zip file.
+    opera-file: # optional
+    # A release note cataloging changes. (Edge only)
+    notes: # optional
+    # This is an alias to notes argument.
+    edge-notes: # optional
+    # Print out more verbose logging.
+    verbose: # optional
+    # The path to a json file with a version field, default to package.json.
+    version-file: # optional 
+    - name: S3 File Upload for gzip and brotli file
+  # You may pin to the exact commit or the version.
+  # uses: lestravo/s3-upload-github-action@2ac17c62797e89fd2e2bd6ae5c6ba76fb2c9008d
+  uses: lestravo/s3-upload-github-action@v1.0.3
+  - name: create-environment-pact-broker
+  # You may pin to the exact commit or the version.
+  # uses: rajnavakotiikea/pact-create-environment@b31c5dfb9e9f9491d9b20b32c508d07bdab2f57a
+  uses: rajnavakotiikea/pact-create-environment@v1.0.1
+  with:
+    # The uniquely identifying name of the environment as used in deployment code
+    name: 
+    # The display name of the environment
+    display_name: 
+    # Whether or not this environment is a production environment
+    is_production: # optional, default is false
+    # The name of the team/person responsible for this environment
+    contact_name: # optional
+    # The email address of the team/person responsible for this environment
+    contact_email: # optional
+    # The base URL of the Pact Broker
+    broker_base_url: 
+    # Pact Broker basic auth username
+    broker_username: # optional
+    # Pact Broker basic auth password
+    broker_password: # optional
+    # Pact Broker bearer token
+    broker_token: # optional
+    - name: publish-pacts-to-pact-broker
+  # You may pin to the exact commit or the version.
+  # uses: rajnavakotiikea/publish-pacts@0f38189e850d734309f61dc3171d6fb902a82c84
+  uses: rajnavakotiikea/publish-pacts@v1.0.1
+  with:
+    # Pacts file path
+    pact_file_dir: 
+    # The consumer application version
+    consumer_app_version: 
+    # Tag name for consumer version. Can be specified multiple times
+    tag: 
+    # Repository branch of the consumer version
+    repository_branch: # optional
+    # Tag consumer version with the name of the current git branch
+    tag_with_git_branch: # optional, default is false
+    # The build URL that created the pact
+    build_url: # optional
+    # If a pact already exists for this consumer version and provider, merge the contents
+    merge: # optional, default is false
+    # The base URL of the Pact Broker
+    broker_base_url: 
+    # Pact Broker basic auth username
+    broker_username: # optional
+    # Pact Broker basic auth password
+    broker_password: # optional
+    # Pact Broker bearer token
+    broker_token: # optional
+    - name: Sync a Repo like subdir of another
+  # You may pin to the exact commit or the version.
+  # uses: tomasdelvechio/actions-push-repo-to-subdir@03a931ed94be8fa004c56ca0c28c73bbd20f4e55
+  uses: tomasdelvechio/actions-push-repo-to-subdir@v1.2.0
+  with:
+    # User of github
+    github-username: 
+    # Subdir name on target repo
+    target-subdir-name: 
+    - name: AutoSync branches
+  # You may pin to the exact commit or the version.
+  # uses: danielthedifficult/Action-AutoSync-Branches@c4bf6ab2758ae371d37464bd171e54c5e35eba3f
+  uses: danielthedifficult/Action-AutoSync-Branches@v1.0.0
+  - name: Okteto Build
+  # You may pin to the exact commit or the version.
+  # uses: okteto/build@018d7d274e0fe4657e11222123d71ed5d4501afb
+  uses: okteto/build@2.16.0
+  with:
+    # Name and tag in the "name:tag" format
+    tag: # optional
+    # Name of the Dockerfile (Default is "Dockerfile")
+    file: # optional, default is Dockerfile
+    # The path
+    path: # optional, default is .
+    # Use buildargs when you want to pass a list of environment variables as build-args
+    buildargs: # optional
+    # Use global when you want to make the image availbale to everyone in your team
+    global: # optional
+    - name: branch-deploy
+  uses: github/branch-deploy@v6.0.1
+  with:
+    # The GitHub token used to create an authenticated client - Provided for you by default!
+    github_token: # default is ${{ github.token }}
+    # The status of the GitHub Actions - For use in the post run workflow - Provided for you by default!
+    status: # default is ${{ job.status }}
+    # The name of the default environment to deploy to. Example: by default, if you type `.deploy`, it will assume "production" as the default environment
+    environment: # optional, default is production
+    # Optional (or additional) target environments to select for use with deployments. Example, "production,development,staging". Example  usage: `.deploy to development`, `.deploy to production`, `.deploy to staging`
+    environment_targets: # optional, default is production,development,staging
+    # Optional target environment URLs to use with deployments. This input option is a mapping of environment names to URLs and the environment names must match the "environment_targets" input option. This option is a comma separated list with pipes (|) separating the environment from the URL. Note: "disabled" is a special keyword to disable an environment url if you enable this option. Format: "<environment1>|<url1>,<environment2>|<url2>,etc" Example: "production|https://myapp.com,development|https://dev.myapp.com,staging|disabled"
+    environment_urls: # optional, default is 
+    # If the environment_url detected in the deployment should be appended to the successful deployment comment or not. Examples: "true" or "false"
+    environment_url_in_comment: # optional, default is true
+    # The name of the production environment. Example: "production". By default, GitHub will set the "production_environment" to "true" if the environment name is "production". This option allows you to override that behavior so you can use "prod", "prd", "main", etc. as your production environment name.
+    production_environment: # optional, default is production
+    # If set, the specified emoji "reaction" is put on the comment to indicate that the trigger was detected. For example, "rocket" or "eyes"
+    reaction: # optional, default is eyes
+    # The string to look for in comments as an IssueOps trigger. Example: ".deploy"
+    trigger: # optional, default is .deploy
+    # The string to look for in comments as an IssueOps noop trigger. Example: "noop"
+    noop_trigger: # optional, default is noop
+    # The string to look for in comments as an IssueOps lock trigger. Used for locking branch deployments on a specific branch. Example: ".lock"
+    lock_trigger: # optional, default is .lock
+    # The string to look for in comments as an IssueOps unlock trigger. Used for unlocking branch deployments. Example: ".unlock"
+    unlock_trigger: # optional, default is .unlock
+    # The string to look for in comments as an IssueOps help trigger. Example: ".help"
+    help_trigger: # optional, default is .help
+    # An alias or shortcut to get details about the current lock (if it exists) Example: ".info"
+    lock_info_alias: # optional, default is .wcid
+    # The allowed GitHub permissions an actor can have to invoke IssueOps commands - Example: "write,maintain,admin"
+    permissions: # default is write,maintain,admin
+    # The separator to use for parsing parameters in comments in deployment requests. Parameters will are saved as outputs and can be used in subsequent steps
+    param_separator: # optional, default is |
+    # The flag to pass into the lock command to lock all environments. Example: "--global"
+    global_lock_flag: # optional, default is --global
+    # The name of a stable branch to deploy to (rollbacks). Example: "main"
+    stable_branch: # optional, default is main
+    # Determine how you want this Action to handle "out-of-date" branches. Available options: "disabled", "warn", "force". "disabled" means that the Action will not care if a branch is out-of-date. "warn" means that the Action will warn the user that a branch is out-of-date and exit without deploying. "force" means that the Action will force update the branch. Note: The "force" option is not recommended due to Actions not being able to re-run CI on commits originating from Actions itself
+    update_branch: # optional, default is warn
+    # Manually enforce commit status checks before a deployment can continue. Only use this option if you wish to manually override the settings you have configured for your branch protection settings for your GitHub repository. Default is "false" - Example value: "context1,context2,context3" - In most cases you will not need to touch this option
+    required_contexts: # optional, default is false
+    # A comma separated list of environments that will not use passing CI as a requirement for deployment. Use this option to explicitly bypass branch protection settings for a certain environment in your repository. Default is an empty string "" - Example: "development,staging"
+    skip_ci: # optional, default is 
+    # A comma separated list of environment that will not use reviews/approvals as a requirement for deployment. Use this options to explicitly bypass branch protection settings for a certain environment in your repository. Default is an empty string "" - Example: "development,staging"
+    skip_reviews: # optional, default is 
+    # Allow branch deployments to run on repository forks. If you want to harden your workflows, this option can be set to false. Default is "true"
+    allow_forks: # optional, default is true
+    # A comma separated list of GitHub usernames or teams that should be considered admins by this Action. Admins can deploy pull requests without the need for branch protection approvals. Example: "monalisa,octocat,my-org/my-team"
+    admins: # optional, default is false
+    # A GitHub personal access token with "read:org" scopes. This is only needed if you are using the "admins" option with a GitHub org team. For example: "my-org/my-team"
+    admins_pat: # optional, default is false
+    # This is an advanced option that is an alternate workflow bundled into this Action. You can control how merge commits are handled when a PR is merged into your repository's default branch. If the merge commit SHA matches the latest deployment for the same environment, then the 'continue' output will be set to 'false' which indicates that a deployment should not be performed again as the latest deployment is identical. If the merge commit SHA does not match the latest deployment for the same environment, then the 'continue' output will be set to 'true' which indicates that a deployment should be performed. With this option, the 'environment' output is also set for subsequent steps to reference
+    merge_deploy_mode: # optional, default is false
+    # This is an advanced option that is an alternate workflow bundled into this Action. You can optionally use this mode in a custom workflow to automatically release all locks that came from a pull request when the pull request is merged. This is useful if you want to ensure that locks are not left behind when a pull request is merged.
+    unlock_on_merge_mode: # optional, default is false
+    # If set to "true", skip the process of completing a deployment. You must manually create a deployment status after the deployment is complete. Default is "false"
+    skip_completing: # optional, default is false
+    - name: ServiceNow CI/CD Batch Install
+  # You may pin to the exact commit or the version.
+  # uses: ServiceNow/sncicd-batch-install@cd0fe0c6cf7d8bf5baab47c8de34f98540b67a9d
+  uses: ServiceNow/sncicd-batch-install@2.0.1
+  with:
+    # Source of the payload(file/workflow)
+    source: 
+    # Filename(or a path without trailing slash) of the manifest JSON file is source equals to file(Default: now_batch_manifest.json)
+    filename: # optional
+    # JSON string with payload if source equals to workflow
+    manifest: # optional
+    - name: Build Azure Virtual Machine Image
+  uses: Azure/build-vm-image@v0
+  with:
+    # This is the Azure region in which the Image Builder will run.
+    location: # optional
+    # This is the Resource Group where the temporary Imagebuilder Template resource will be created.
+    resource-group-name: 
+    # The name of the image builder template resource to be used for creating and running the Image builder service.
+    image-builder-template-name: # optional
+    # The value is an integer which is used as timeout in minutes for running the image build.
+    build-timeout-in-minutes: # optional, default is 240
+    # You can override the VM size, from the default value i.e. Standard_D1_v2.
+    vm-size: # optional, default is Standard_D1_v2
+    # The identity that will be used to do the role assignment and resource creation
+    managed-identity: # optional
+    # [ PlatformImage | SharedImageGallery | ManagedImage ]
+    source-image-type: # optional, default is PlatformImage
+    # OS types supported: [ linux | windows ].
+    source-os-type: 
+    # Value of source-image supported by Azure Image Builder.
+    source-image: # optional
+    # This takes the path to a directory or a file in the runner. By default, it points to the default download directory of the github runner.
+    customizer-source: # optional
+    # The customer can enter multi inline powershell or shell commands and use variables to point to directories inside the downloaded location.
+    customizer-script: # optional
+    # The value is boolean and set to false by default. This value is for Windows images only, the image builder will run Windows Update at the end of the customizations and also handle the reboots it requires.
+    customizer-windows-update: # optional
+    # ManagedImage | SharedImageGallery | VHD
+    dist-type: # optional, default is ManagedImage
+    # Image Resource Id to be created by AIB
+    dist-resource-id: # optional
+    # location of Image created by AIB
+    dist-location: # optional
+    # Every Image builder run is identified with a unique run id.
+    run-output-name: # optional
+    # The values set will be used to set the user defined tags on the custom image artifact created.
+    dist-image-tags: # optional
+    - name: Kubernetes bake
+  uses: Azure/k8s-bake@v2
+  with:
+    # Acceptable values: helm or kompose or kustomize
+    renderEngine: 
+    # Required if renderEngine == helm. Helm chart to bake.
+    helmChart: # optional
+    # Relevant if renderEngine == helm. Namespace to be used for Helm option.
+    namespace: # optional
+    # Acceptable values: helm or kustomize. Arguments to be passed to the Helm or kustomize template command
+    arguments: # optional
+    # Relevant if renderEngine == helm. Array of path to override files. Each path should be mentioned on a newline
+    overrideFiles: # optional
+    # Relevant if renderEngine == helm. Override values to set.
+    overrides: # optional
+    # Relevant if renderEngine == helm. Release name to be used for Helm option.
+    releaseName: # optional
+    # Required if renderEngine == kustomize. Path to directory or the Git repository containing kustomization.yaml file.
+    kustomizationPath: # optional
+    # Required if renderEngine == kompose. Path(s) to Docker compose files
+    dockerComposeFile: # optional
+    # Version of kubectl. Installs a specific version of helm binary
+    helm-version: # optional
+    # Version of kubectl. Installs a specific version of kubectl binary
+    kubectl-version: # optional
+    # Version of kubectl. Installs a specific version of kompose binary
+    kompose-version: # optional
+    # When set to true, the output of the bake command would not be shown.
+    silent: # optional
+    - name: Branch-based Environment Variables
+  # You may pin to the exact commit or the version.
+  # uses: simenandre/branch-environment-action@a9dbc0df8e6d85c2aaa398c94efc911a0a55d001
+  uses: simenandre/branch-environment-action@v1.0.0-alpha.1
+  with:
+    # Environment Variable
+    name: 
+    - name: create-environment-pact-broker
+  # You may pin to the exact commit or the version.
+  # uses: rajnavakotiikea/pact-create-environment@b31c5dfb9e9f9491d9b20b32c508d07bdab2f57a
+  uses: rajnavakotiikea/pact-create-environment@v1.0.1
+  with:
+    # The uniquely identifying name of the environment as used in deployment code
+    name: 
+    # The display name of the environment
+    display_name: 
+    # Whether or not this environment is a production environment
+    is_production: # optional, default is false
+    # The name of the team/person responsible for this environment
+    contact_name: # optional
+    # The email address of the team/person responsible for this environment
+    contact_email: # optional
+    # The base URL of the Pact Broker
+    broker_base_url: 
+    # Pact Broker basic auth username
+    broker_username: # optional
+    # Pact Broker basic auth password
+    broker_password: # optional
+    # Pact Broker bearer token
+    broker_token: # optional
+    - name: BrowserStack Local Container
+  # You may pin to the exact commit or the version.
+  # uses: ianwalter/bsl@01d16d41a0fcc987dff171c86942fb1bc1a95997
+  uses: ianwalter/bsl@v2.0.1
+  - name: Cautious Broccoli
+  # You may pin to the exact commit or the version.
+  # uses: explore-dev/cautious-broccoli@61a0ff852f1743a18871e05429d4fef94b9e0086
+  uses: explore-dev/cautious-broccoli@v0.0.1-alpha
+  with:
+    # Repository name with owner.
+    repository: # optional, default is ${{ github.repository }}
+    # Pull request number.
+    prnumber: # optional, default is ${{ github.event.pull_request.number }}
+    # Personal access token (PAT) used to fetch information from the repository.  The PAT is configured with the local git config, which enables your scripts  to run authenticated git commands. The post-job step removes the PAT. We recommend using a service account with the least permissions necessary. Also when generating a new PAT, select the least scopes necessary. [Learn more about creating and using encrypted secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets)
+
+    token: # optional, default is ${{ github.token }}
+    - name: Setup Browser
+  # You may pin to the exact commit or the version.
+  # uses: abhi1693/setup-browser@311d294ea9c5d710f61204ba3c4c3d31fa62443e
+  uses: abhi1693/setup-browser@v0.3.5
+  with:
+    # The browser to install [chrome, edge, firefox].
+    browser: 
+    # The version to install.
+    version: # optional, default is latest
+    - name: node-10-browsers
+  # You may pin to the exact commit or the version.
+  # uses: aquariuslt/node-browsers-github-actions@d8dfe9494b725bf3e9e1f91aa690f74fb3314b4f
+  uses: aquariuslt/node-browsers-github-actions@v1.0.0
+  - name: upload app to BrowserStack
+  # You may pin to the exact commit or the version.
+  # uses: shreyanshp/upload-app-browserstack@dae6bc83dc40a60085bea7c5161cb729cf8d2526
+  uses: shreyanshp/upload-app-browserstack@v3
+  with:
+    # Please provide the path for the app to be uploaded
+    app-path: # default is Undefined
+    # Please provide the username for BrowserStack
+    browserstack-username: # default is Undefined
+    # Please provide the accesskey for BrowserStack
+    browserstack-accesskey: # default is Undefined
+    # Please provide any custom id
+    custom-id: # optional, default is upload-app-browserstack
+    - name: No broken dependency
+  # You may pin to the exact commit or the version.
+  # uses: hata6502/no-broken-dependency-action@de203966cf2677d61574301a4ea5a35bb343597b
+  uses: hata6502/no-broken-dependency-action@v5.0.1
+  with:
+    # 
+    directory: # optional
+    - name: BrowserStack Local Container
+  # You may pin to the exact commit or the version.
+  # uses: ianwalter/bsl@01d16d41a0fcc987dff171c86942fb1bc1a95997
+  uses: ianwalter/bsl@v2.0.1
+  - name: Broken Link Checker Action
+  # You may pin to the exact commit or the version.
+  # uses: technote-space/broken-link-checker-action@a0e7e7f2a4ff1fb311c304888101f000c57d0f2a
+  uses: technote-space/broken-link-checker-action@v1.1.3
+  with:
+    # Secret GitHub API token to use for making API requests.
+    GITHUB_TOKEN: # default is ${{ github.token }}
+    # Target link
+    TARGET: # default is https://github.com/${{ github.repository }}
+    # Recursive?
+    RECURSIVE: # optional
+    # Issue title
+    TITLE: # default is Broken link found (${URL})
+    # Issue body
+    BODY: # default is ## Broken link found
+
+Broken Link Checker found a broken link on ${TARGET}
+
+  Target: `${URL}`
+  > ${REASON}
+
+  [View Actions Results](https://github.com/${OWNER}/${REPO}/commit/${SHA}/checks)
+
+    # Labels
+    LABELS: # optional
+    # Assignees
+    ASSIGNEES: # optional
+    # Accepted schemes
+    ACCEPTED_SCHEMES: # optional
+    # Excluded keyhwords
+    EXCLUDED_KEYWORDS: # optional
+    # Excluded schemes
+    EXCLUDED_SCHEMES: # optional
+    # Included keywords
+    INCLUDED_KEYWORDS: # optional
+    # Exclude external links?
+    EXCLUDE_EXTERNAL_LINKS: # optional
+    # Exclude internal links?
+    EXCLUDE_INTERNAL_LINKS: # optional
+    # Exclude links to same page?
+    EXCLUDE_LINKS_TO_SAME_PAGE: # optional
+    # Honor robot exclusions?
+    HONOR_ROBOT_EXCLUSIONS: # optional
+    # Filter level
+    FILTER_LEVEL: # optional
+    # User agent
+    USER_AGENT: # optional
+    - name: browserslist-update-action
+  # You may pin to the exact commit or the version.
+  # uses: c2corg/browserslist-update-action@b0da823739f07110650c993d9385e18d5796e715
+  uses: c2corg/browserslist-update-action@v2.2.2
+  with:
+    # GitHub secret
+    github_token: 
+    # The pull request branch name
+    branch: # optional, default is browserslist-update
+    # The target branch into which the pull request will be merged
+    base_branch: # optional
+    # For monorepos, directory to switch to
+    directory: # optional, default is .
+    # The message to use when committing changes
+    commit_message: # optional, default is Update caniuse database
+    # The title of the pull request
+    title: # optional, default is 📈 Update caniuse database
+    # The body of the pull request
+    body: # optional, default is Caniuse database has been updated. Review changes, merge this PR and have a 🍺.
+    # Labels to associate to the pull request
+    labels: # optional
+    - name: Hugo Broken Link Check
+  # You may pin to the exact commit or the version.
+  # uses: marccampbell/hugo-linkcheck-action@8383346624d95f935d5f3b1aa6c01c454291c474
+  uses: marccampbell/hugo-linkcheck-action@v0.1.3
+  - name: Broken Web Link Checker
+  # You may pin to the exact commit or the version.
+  # uses: elliotforbes/broken-link-checker@6d86aabafe76b59d6d182b65433921c88c8d1e56
+  uses: elliotforbes/broken-link-checker@1.0.3
+  with:
+    # The root URL of the website you wish to crawl
+    url: # default is https://...
+    - name: Robot Framework Browser Action
+  # You may pin to the exact commit or the version.
+  # uses: GoleeTeam/robotframework-browser-action@7074355764d34a6dbf531c7ecfc10dd7d2aac65d
+  uses: GoleeTeam/robotframework-browser-action@v1.0-golee1
+  with:
+    # custom imagename for execute robot framework
+    image: # default is ppodgorsek/robot-framework
+    # custom tag verion image for execute robot framework
+    image_version: # default is latest
+    # Directory where Robot tests are located in the repository
+    tests_dir: # default is robot_tests
+    # Where will the report from test be saved
+    reports_dir: # default is reports
+    # Shared memory that Docker container is allowed to use
+    allowed_shared_memory: # default is 1g
+    # Browser to use
+    browser: # default is chrome
+    # Execute tests in parallel
+    robot_threads: # default is 1
+    # Extra settings for parallel execution. https://github.com/mkorpela/pabot#command-line-options
+    pabot_options: # default is 
+    # Extra options for robot command
+    robot_options: # default is 
+    # Color depth of the virtual screen
+    screen_color_depth: # default is 24
+    # Height of the virtual screen
+    screen_height: # default is 1080
+    # Width of the virtual screen
+    screen_width: # default is 1920
+  - name: No broken dependency
+  # You may pin to the exact commit or the version.
+  # uses: hata6502/no-broken-dependency-action@de203966cf2677d61574301a4ea5a35bb343597b
+  uses: hata6502/no-broken-dependency-action@v5.0.1
+  with:
+    # 
+    directory: # optional
+    - name: Upload app to app live BrowserStack
+  # You may pin to the exact commit or the version.
+  # uses: Gildofj/upload-app-to-app-live-browserstack@b07bfcfd9c050beaf60c4a21a788507086f5016d
+  uses: Gildofj/upload-app-to-app-live-browserstack@v1.0.1
+  with:
+    # Please provide the path for the app to be uploaded
+    app-path: # default is undefined
+    # Please provide the username for BrowserStack
+    browserstack-username: # default is undefined
+    # Please provide the accesskey for BrowserStack
+    browserstack-accesskey: # default is undefined
+    # Please provide any custom id
+    custom-id: # optional, default is upload-app-browserstack
+    # Please provide app name to remove before upload
+    app-to-replace: # optional, default is undefined
+    - name: Browser Platform Publisher
+  # You may pin to the exact commit or the version.
+  # uses: PlasmoHQ/bpp@ba887a93e8ed778819c630e0e943f06190e4545d
+  uses: PlasmoHQ/bpp@v3.5.0
+  with:
+    # A JSON string containing the keys to be used for the submission process. (This should be a secret)
+    keys: 
+    # The extension zip artifact to be published.
+    artifact: # optional
+    # This is an alias to artifact argument.
+    zip: # optional
+    # This is an alias to artifact argument.
+    file: # optional
+    # The path to the Chrome extension zip file.
+    chrome-file: # optional
+    # The path to the Firefox extension zip file.
+    firefox-file: # optional
+    # The path to the Edge extension zip file.
+    edge-file: # optional
+    # The path to the Opera extension zip file.
+    opera-file: # optional
+    # A release note cataloging changes. (Edge only)
+    notes: # optional
+    # This is an alias to notes argument.
+    edge-notes: # optional
+    # Print out more verbose logging.
+    verbose: # optional
+    # The path to a json file with a version field, default to package.json.
+    version-file: # optional
+    - name: HiveMQ 4 MQTT Broker in GitHub Actions
+  # You may pin to the exact commit or the version.
+  # uses: Namoshek/hivemq4-github-action@5506ca65ade674ca89ef889a6181c6822e495983
+  uses: Namoshek/hivemq4-github-action@v1
+  with:
+    # HiveMQ 4 version to use
+    version: # optional, default is latest
+    # Port mappings in a [host]:[container] format, delimited by spaces (example: "1883:1883 8883:8883")
+    ports: # optional, default is 1883:1883
+    # Absolute path to a directory containing certificate files which can be referenced in the config (the folder is mounted under `/hivemq-certs`)
+    certificates: # optional, default is 
+    # Absolute path to the `config.xml` configuration file to use
+    config: # optional, default is 
+    # The name of the spawned Docker container (can be used as hostname when accessed from other containers)
+    container-name: # optional, default is hivemq
+    - name: Scaleway S3 command line - Broken
+  # You may pin to the exact commit or the version.
+  # uses: emilcardell/scw-s3-action@90230d7074bb1bef22a7ce8e0869cd4dee39e710
+  uses: emilcardell/scw-s3-action@v0.0.2
+  - name: Broken Link Checker Action
+  # You may pin to the exact commit or the version.
+  # uses: technote-space/broken-link-checker-action@a0e7e7f2a4ff1fb311c304888101f000c57d0f2a
+  uses: technote-space/broken-link-checker-action@v1.1.3
+  with:
+    # Secret GitHub API token to use for making API requests.
+    GITHUB_TOKEN: # default is ${{ github.token }}
+    # Target link
+    TARGET: # default is https://github.com/${{ github.repository }}
+    # Recursive?
+    RECURSIVE: # optional
+    # Issue title
+    TITLE: # default is Broken link found (${URL})
+    # Issue body
+    BODY: # default is ## Broken link found
+
+Broken Link Checker found a broken link on ${TARGET}
+
+  Target: `${URL}`
+  > ${REASON}
+
+  [View Actions Results](https://github.com/${OWNER}/${REPO}/commit/${SHA}/checks)
+
+    # Labels
+    LABELS: # optional
+    # Assignees
+    ASSIGNEES: # optional
+    # Accepted schemes
+    ACCEPTED_SCHEMES: # optional
+    # Excluded keyhwords
+    EXCLUDED_KEYWORDS: # optional
+    # Excluded schemes
+    EXCLUDED_SCHEMES: # optional
+    # Included keywords
+    INCLUDED_KEYWORDS: # optional
+    # Exclude external links?
+    EXCLUDE_EXTERNAL_LINKS: # optional
+    # Exclude internal links?
+    EXCLUDE_INTERNAL_LINKS: # optional
+    # Exclude links to same page?
+    EXCLUDE_LINKS_TO_SAME_PAGE: # optional
+    # Honor robot exclusions?
+    HONOR_ROBOT_EXCLUSIONS: # optional
+    # Filter level
+    FILTER_LEVEL: # optional
+    # User agent
+    USER_AGENT: # optional
+    - name: Hugo Check for broken links
+  # You may pin to the exact commit or the version.
+  # uses: BoundfoxStudios/action-hugo-link-check@9eb0481ae7b392d0a2073ddbdc6dfc5b23906a6d
+  uses: BoundfoxStudios/action-hugo-link-check@v2.0.2
+  with:
+    # The number of required broken links to fail the action. Set to 0 to deactivate. Defaults to 1.
+    fail-on-broken-links: # optional, default is 1
+    # Logs skipped links and sends them to skipped-links output
+    log-skipped-links: # optional, default is false
+    # Automatically retry requests that return HTTP 429 responses and include a 'retry-after' header
+    retry: # optional, default is true
+    # Request timeout in ms. Set to 0 for no timeout. Defaults to 5000
+    timeout: # optional, default is 5000
+    # List of urls in regexy form to not include in the check
+    skip: # optional, default is 
+    # Base path to your hugo project.
+    hugo-root: # default is ./
+    # Base path to your hugo content directory.
+    hugo-content-dir: # default is ./content
+    # Base path to your hugo config.
+    hugo-config: # default is ./config.yaml
+    # Maximum time to wait for hugo to start up and process your project.
+    hugo-startup-wait-time: # default is 20
+    - name: publish-pacts-to-pact-broker
+  # You may pin to the exact commit or the version.
+  # uses: rajnavakotiikea/publish-pacts@0f38189e850d734309f61dc3171d6fb902a82c84
+  uses: rajnavakotiikea/publish-pacts@v1.0.1
+  with:
+    # Pacts file path
+    pact_file_dir: 
+    # The consumer application version
+    consumer_app_version: 
+    # Tag name for consumer version. Can be specified multiple times
+    tag: 
+    # Repository branch of the consumer version
+    repository_branch: # optional
+    # Tag consumer version with the name of the current git branch
+    tag_with_git_branch: # optional, default is false
+    # The build URL that created the pact
+    build_url: # optional
+    # If a pact already exists for this consumer version and provider, merge the contents
+    merge: # optional, default is false
+    # The base URL of the Pact Broker
+    broker_base_url: 
+    # Pact Broker basic auth username
+    broker_username: # optional
+    # Pact Broker basic auth password
+    broker_password: # optional
+    # Pact Broker bearer token
+    broker_token: # optional
+    - name: Hugo Internal Broken Link Checker
+  # You may pin to the exact commit or the version.
+  # uses: marojor/hugo-broken-link-checker@61eef7a86be8160e41f9d77ecbb0dc60b5b1901b
+  uses: marojor/hugo-broken-link-checker@v1.1.0
+  with:
+    # Location relative to ${GITHUB_WORKFLOW} for the skip file for `linkcheck`. See https://github.com/filiph/linkcheck#skipping-urls
+    skip-file: # optional
+    # Whether anchors should be also checked. Default: true
+    check-anchors: # optional, default is true
+    - name: GRS Action
+  # You may pin to the exact commit or the version.
+  # uses: Zo-Bro-23/grs-action@60e599111ed806fb69f1534fe2f5d7be7950fc15
+  uses: Zo-Bro-23/grs-action@v0.0.1
+  with:
+    # GitHub Token
+    token: 
+    # Type of card: repo, top-langs, or wakatime (leave empty for stats card)
+    card: # optional
+    # Options for the card
+    options: 
+    # Output path for SVG file (relative path; include filename with .svg)
+    path: # optional
+    # Experimental feature: Should fetch multipage responses (more accurate) if user has more than 100 repos
+    fetch_multipage: # optional
+    - name: Vault Approle Token extractor through Vault Broker API
+  # You may pin to the exact commit or the version.
+  # uses: bcgov-nr/action-vault-broker-approle@4cedd4b7eeb60c39db220a2622758e45b5ceedce
+  uses: bcgov-nr/action-vault-broker-approle@v0.0.5
+  with:
+    # The JWT to be used on the broker
+    broker_jwt: 
+    # The id of the role to be used during provisioning
+    provision_role_id: 
+    # Name of the project on vault, Ex. client
+    project_name: 
+    # Name of the app on vault, Ex. app-client
+    app_name: 
+    # Name of the vault environment, Ex. development
+    environment: 
+    # Branch to diff against
+    diff_branch: # optional, default is ${{ github.event.repository.default_branch }}
+    # Non-default repo to clone
+    repository: # optional, default is ${{ github.repository }}
+    # Something other than the default broker URL
+    broker_url: # optional, default is https://nr-broker.apps.silver.devops.gov.bc.ca
+    # Something other than the default vault address
+    vault_addr: # optional, default is https://vault-iit.apps.silver.devops.gov.bc.ca
+    - name: S3 File Upload for gzip and brotli file
+  # You may pin to the exact commit or the version.
+  # uses: lestravo/s3-upload-github-action@2ac17c62797e89fd2e2bd6ae5c6ba76fb2c9008d
+  uses: lestravo/s3-upload-github-action@v1.0.3
+  - name: Mosquitto MQTT Broker in GitHub Actions
+  # You may pin to the exact commit or the version.
+  # uses: Namoshek/mosquitto-github-action@af63d4b489c7d348b92de03d61d528a80e85fd43
+  uses: Namoshek/mosquitto-github-action@v1
+  with:
+    # Mosquitto version to use
+    version: # optional, default is latest
+    # Port mappings in a [host]:[container] format, delimited by spaces (example: "1883:1883 8883:8883")
+    ports: # optional, default is 1883:1883
+    # Absolute path to a directory containing certificate files which can be referenced in the config (the folder is mounted under `/mosquitto-certs`)
+    certificates: # optional, default is 
+    # Absolute path to the mosquitto.conf configuration file to use
+    config: # optional, default is 
+    # Absolute path to the mosquitto.passwd password file to use
+    password-file: # optional, default is 
+    # The name of the spawned Docker container (can be used as hostname when accessed from other containers)
+    container-name: # optional, default is mosquitto
+    - name: Notify Telegram Action Bro
+  # You may pin to the exact commit or the version.
+  # uses: fufaldinav/telegram-action@4de9bf2e82d4abcd64d71527c822d5c78534ccae
+  uses: fufaldinav/telegram-action@v1.3
+  with:
+    # Commit message template
+    commit_template: # optional
+    # Release message template
+    release_template: # optional
+    # Job status
+    status: # optional
+    - name: PR Media Slack Notifier
+  # You may pin to the exact commit or the version.
+  # uses: d-fournier/pr-media-notifier-action@83ec63540aced93d9b7fae32dbd3ef8174b72894
+  uses: d-fournier/pr-media-notifier-action@v2.0
+  with:
+    # Slack Token of an app with the access to your channel
+    slack-token: 
+    # ID/Name of the channel where you want to post your update
+    slack-channel: 
+    # Github token
+    github-token: 
+    - name: Setup MediaWiki Action
+  # You may pin to the exact commit or the version.
+  # uses: ProfessionalWiki/setup-mediawiki@9b91161990846a51d58a18fc87d22a5c35e1b24e
+  uses: ProfessionalWiki/setup-mediawiki@0.1
+  with:
+    # MediaWiki version. Needs to be available in git. Examples: master, REL1_35, 1.34.2
+    version: # optional, default is master
+    # Name of MediaWiki extension to LOAD in LocalSettings. This action does not install the extension.
+    extension: 
+    - name: Feed To Social Media
+  # You may pin to the exact commit or the version.
+  # uses: lwojcik/github-action-feed-to-social-media@f4b2ae401960e7da3fd85905d3e522dbce5d466e
+  uses: lwojcik/github-action-feed-to-social-media@v1
+  with:
+    # URL of the feed to fetch
+    feedUrl: 
+    # Which item in the feed item array should be considered newest?
+    newestItemStrategy: # default is latestDate
+    # Path to the directory where cache files are stored
+    cacheDirectory: # optional, default is cache
+    # Name of the file where cache data is stored
+    cacheFileName: # optional, default is feed-to-social-media.json
+    # Format of the post. Available tags: {title} - post title, {link} - post URL
+    postFormat: # optional, default is {title} {link}
+    # Enable posting to Mastodon?
+    mastodonEnable: # optional, default is false
+    # URL of the Mastodon instance to which the status should be sent
+    mastodonInstance: # optional
+    # Access token for the Mastodon API
+    mastodonAccessToken: # optional
+    # Visibility setting for Mastodon posts
+    mastodonPostVisibility: # optional, default is public
+    # Enable updating Mastodon profile metadata?
+    mastodonMetadataEnable: # optional, default is false
+    # URL of the Mastodon instance where profile metadata should be updated
+    mastodonMetadataInstance: # optional
+    # Access token for the Mastodon API on the instance where profile metadata should be updated
+    mastodonMetadataAccessToken: # optional
+    # Index of the existing profile metadata field that should be updated (starting at 0)
+    mastodonMetadataFieldIndex: 
+    # Enable posting to Twitter?
+    twitterEnable: # optional, default is false
+    # Twitter API key
+    twitterApiKey: # optional
+    # Twitter API key secret
+    twitterApiKeySecret: # optional
+    # Twitter API access token
+    twitterAccessToken: # optional
+    # Twitter API access token secret
+    twitterAccessTokenSecret: # optional
+    # Enable posting to Discord?
+    discordEnable: # optional, default is false
+    # Webhook URL to use for posting messages to Discord
+    discordWebhookUrl: # optional
+    # Enable posting to Slack?
+    slackEnable: # optional, default is false
+    # Webhook URL to use for posting messages to Slack
+    slackWebhookUrl: # optional
+    - name: Mediawiki Extension PHPUnit Runner
+  # You may pin to the exact commit or the version.
+  # uses: WikiTeq/mediawiki-phpunit-action@790edfbb9d9db97991b62a4ae293489d7aad213f
+  uses: WikiTeq/mediawiki-phpunit-action@v2
+  with:
+    # PHP version
+    php: 
+    # Mediawiki branch to test against
+    mwbranch: 
+    # Extension name to test
+    extension: 
+    # Extension tests @group
+    testgroup: 
+    # Is it an extension or skin
+    type: # optional, default is extension
+    - name: MediaWiki Edit Action
+  # You may pin to the exact commit or the version.
+  # uses: jtmullen/mediawiki-edit-action@db2dfa4bfdb9ece90dedae5484f628c29ab109e2
+  uses: jtmullen/mediawiki-edit-action@v0.1.1
+  with:
+    # 
+    wiki_text: # optional
+    # A file with the wiki text for the edit, path relative to GitHub Workspace
+    wiki_text_file: # optional
+    # Summary of changes to be associated with this edit
+    edit_summary: 
+    # The Page ID to edit, must include this or page_name
+    page_id: # optional
+    # The name of the page to edit
+    page_name: # optional
+    # The URL for the API of the wiki to edit
+    api_url: 
+    # Username to log in with, should be a bot username
+    username: 
+    # Login Password for above username
+    password: 
+    # Custom User Agent
+    user_agent: # optional
+    # Include this input to append the specified text
+    append: # optional
+    # Include this input to prepend the specified text
+    prepend: # optional
+    # Include this input to mark the edit as minor
+    minor: # optional
+    - name: send-fb-post-with-media
+  # You may pin to the exact commit or the version.
+  # uses: LuisAlejandro/send-fb-post-with-media@8ebb0422280ca0ef0ff55bfdb73d13a242f34c12
+  uses: LuisAlejandro/send-fb-post-with-media@0.1.0
+  - name: Random Social Sharer
+  # You may pin to the exact commit or the version.
+  # uses: hendrixjoseph/random-social-share@8ecc72040fad785b40d2589c9bc01c6e1fb3c229
+  uses: hendrixjoseph/random-social-share@v1.0
+  with:
+    # Twitter access token
+    twitter_access_token: # optional
+    # Twitter access token secret
+    twitter_access_token_secret: # optional
+    # Twitter consumer key
+    twitter_consumer_key: # optional
+    # Twitter consumer key secret
+    twitter_consumer_secret: # optional
+    # Facebook access token
+    facebook_access_token: # optional
+    # URL of the list of posts.
+    source: 
+    - name: Remove EXIF GPS Tags
+  # You may pin to the exact commit or the version.
+  # uses: maxwellpeterson/exif-gps-action@006b103143ec061b20a46bcc8800629e85a4982c
+  uses: maxwellpeterson/exif-gps-action@v1.0.0
+  - name: Nvenc Docker Github Actions
+  # You may pin to the exact commit or the version.
+  # uses: HiWay-Media/nvenc-docker@513545731a8586c505e853141b7b757debc3d0ea
+  uses: HiWay-Media/nvenc-docker@v1.0.2
+  with:
+    # 
+    token: # optional, default is ${{ github.token }}
+    # ffmpeg command
+    command: # default is -i
+    - name: Nvenc & ImageMagick Docker Github Actions
+  # You may pin to the exact commit or the version.
+  # uses: HiWay-Media/Nvenc-ImageMagick@32461b66e4f10d17834136b7ed4af370d4bc50c7
+  uses: HiWay-Media/Nvenc-ImageMagick@v1.0.0
+  with:
+    # 
+    token: # optional, default is ${{ github.token }}
+    # ffmpeg command
+    command: # default is -i
+    - name: Render PlantUML to Wiki Extended
+  # You may pin to the exact commit or the version.
+  # uses: MOES-Media/render-plantuml-to-wiki-action@98f5743399a7d4ab517b1ae3b6245ea501035ec0
+  uses: MOES-Media/render-plantuml-to-wiki-action@v1.0
+  with:
+    # Secure token to access wiki repo
+    WIKI_TOKEN: 
+    # Directory in repo to read PlantUML source files from
+    INPUT_DIR: # optional, default is /input_directory
+    # Directory in wiki to write rendered diagrams to
+    OUTPUT_DIR: # optional, default is /output_directory
+    - name: acru-l
+  # You may pin to the exact commit or the version.
+  # uses: quadio-media/acru-l@c1b1a52df9f9016ed499a06862ab1c54a9869b90
+  uses: quadio-media/acru-l@1.0.0a6
+  with:
+    # Subcommand to use
+    subcommand: # optional, default is deploy -f --require-approval=never
+    - name: Cloudinary Upload Images
+  # You may pin to the exact commit or the version.
+  # uses: emmanuelgautier/cloudinary-upload-action@6eca54b92f2a953763e2a4751ca95eb16012aa07
+  uses: emmanuelgautier/cloudinary-upload-action@v1.0
+  with:
+    # Cloudinary account name
+    cloud-name: # optional, default is <name>
+    # Cloudinary API Key
+    api-key: # optional, default is <api-key>
+    # Cloudinary API Secret Key
+    api-secret: # optional, default is <api-secret>
+    # Image path to upload
+    image: # optional, default is 
+    # Pattern or array of images path to upload
+    images: # optional, default is 
+    - name: Update Android Play Store Version Code
+  # You may pin to the exact commit or the version.
+  # uses: lukasa1993/android-version-code-update@f08e9918a996ab8204b5fab5fad58b57a0bca71b
+  uses: lukasa1993/android-version-code-update@v2.0.5
+  with:
+    # The service account json private key file to authorize the upload request
+    serviceAccountJson: 
+    # The package name, or Application Id, of the app you are uploading
+    packageName: 
+    - name: Play Ansible Playbook
+  # You may pin to the exact commit or the version.
+  # uses: arillso/action.playbook@3fe70feea80fe2b79ba4f26d800bb17637e2b828
+  uses: arillso/action.playbook@0.0.5
+  with:
+    # Name of the galaxy file in your workspace.
+    galaxy_file: # optional
+    # Name of the inventory file in your workspace.
+    inventory: 
+    # Name of the playbook in your workspace.
+    playbook: 
+    # Further limit selected hosts to an additional pattern.
+    limit: # optional
+    # Only run plays and tasks whose tags do not match these values.
+    skip_tags: # optional
+    # Start the playbook at the task matching this name.
+    start_at_task: # optional
+    # Only run plays and tasks tagged with these values.
+    tags: # optional
+    # Set additional variables as key=value.
+    extra_vars: # optional
+    # Prepend paths to module library.
+    module_path: # optional
+    # Run a check, do not apply any changes.
+    check: # optional
+    # When changing (small) files and templates, show the differences in those files; works great with –check.
+    diff: # optional
+    # Clear the fact cache for every host in inventory.
+    flush_cache: # optional
+    # Run handlers even if a task fails.
+    force_handlers: # optional
+    # Outputs a list of matching hosts.
+    list_hosts: # optional
+    # List all available tags.
+    list_tags: # optional
+    # List all tasks that would be executed.
+    list_tasks: # optional
+    # Perform a syntax check on the playbook.
+    syntax_check: # optional
+    # Specify number of parallel processes to use.
+    forks: # optional
+    # The vault identity to use.
+    vault_id: # optional
+    # The vault password to use.
+    vault_password: # optional
+    # Level of verbosity, 0 up to 4.
+    verbose: # optional
+    # Use this key to authenticate the connection.
+    private_key: # optional
+    # Connect as this user.
+    user: # optional
+    # Connection type to use.
+    connection: # optional
+    # Override the connection timeout in seconds.
+    timeout: # optional
+    # Specify common arguments to pass to sftp/scp/ssh.
+    ssh_common_args: # optional
+    # Specify extra arguments to pass to sftp only.
+    sftp_extra_args: # optional
+    # Specify extra arguments to pass to scp only.
+    scp_extra_args: # optional
+    # Specify extra arguments to pass to ssh only.
+    ssh-extra-args: # optional
+    # Run operations with become.
+    become: # optional
+    # Privilege escalation method to use.
+    become_method: # optional
+    # Run operations as this user.
+    become_user: # optional
+    - name: Spotify - Play
+  # You may pin to the exact commit or the version.
+  # uses: SvanBoxel/spotify-action@ffdd65783fdf01d8133b72a8cde7e4e3633aa80c
+  uses: SvanBoxel/spotify-action@1.0.3
+  with:
+    # Spotify token: Visit https://developer.spotify.com/console/get-search-item/ and click "Get token"
+    token: 
+    # Song to search for
+    song: # default is 
+    # Spotify device_id (https://developer.spotify.com/documentation/web-api/reference/player/get-a-users-available-devices/)
+    device_id: 
+    - name: Run Playwright tests
+  uses: microsoft/playwright-github-action@v1.5.4
+  - name: Promote Google Play Release Track
+  # You may pin to the exact commit or the version.
+  # uses: kevin-david/promote-play-release@ca593a708fcb639d6e1fb7aff1c24105ca2a4b88
+  uses: kevin-david/promote-play-release@v1.0.0
+  with:
+    # The raw json text of the service account private key to authorize the upload request
+    service-account-json-raw: 
+    # The package name, or Application Id, of the app you are editing
+    package-name: 
+    # In-app update priority of the release. All newly added APKs in the release will be considered at this priority. Can take values in the range [0, 5], with 5 the highest priority. Defaults to 0
+    inapp-update-priority: # optional, default is 0
+    # Portion of users who should get the staged version of the app. Accepts values between 0.0 and 1.0 (exclusive-inclusive). Defaults to 1.0
+    user-fraction: # optional, default is 1.0
+    # The source track to promote from. Defaults to beta.
+    from-track: # optional, default is beta
+    # The target track to promote to. Defaults to production.
+    to-track: # optional, default is production
+    - name: PlayStation Changeinfo
+  # You may pin to the exact commit or the version.
+  # uses: Applelo/actions-ps-changeinfo@02f44b52b8077036ee5d949a393f8f84f01e4aea
+  uses: Applelo/actions-ps-changeinfo@v1.2
+  with:
+    # The path of the changelog markdown file
+    input: # optional, default is CHANGELOG.md
+    # The path of the changeinfo xml file
+    output: # optional, default is sce_sys/changeinfo.xml
+    # The name of the branch for the pull request
+    branch: # optional, default is ps-changeinfo
+    # GitHub token
+    token: 
+    - name: Swift Playgrounds
+  # You may pin to the exact commit or the version.
+  # uses: thisIsTheFoxe/swift-playgrounds-action@2d53efdd21c398d1656f7c69ed81a8cca4730f18
+  uses: thisIsTheFoxe/swift-playgrounds-action@v1
+  - name: Setup Playwright
+  # You may pin to the exact commit or the version.
+  # uses: maxmilton/action-setup-playwright@2d6caa385908bbd298c4302685378300a1659e02
+  uses: maxmilton/action-setup-playwright@v1.0.6
+  with:
+    # Comma-separated list of the browsers you intend to launch
+    browsers: # optional, default is chromium, firefox, webkit
+    # Specify whether browsers will run in headless mode
+    headless: # optional, default is true
+    - name: Playdate SDK
+  # You may pin to the exact commit or the version.
+  # uses: jmhobbs/playdate-compiler-action@e1a9722b1c1f82112e6dac064c7b7e8c4356942e
+  uses: jmhobbs/playdate-compiler-action@v2
+  with:
+    # Path to your source code
+    path: # default is src
+    # Name of your output file (.pdx)
+    output: # optional, default is app.pdx
+    # Strip debug symbols
+    strip: # optional, default is true
+    # Compress output files
+    compress: # optional, default is true
+    # Create a .tar.gz of the output after compiling
+    package: # optional, default is true
+    # Compiler version to use
+    version: # optional, default is latest- name: Playdate SDK
+  # You may pin to the exact commit or the version.
+  # uses: jmhobbs/playdate-compiler-action@e1a9722b1c1f82112e6dac064c7b7e8c4356942e
+  uses: jmhobbs/playdate-compiler-action@v2
+  with:
+    # Path to your source code
+    path: # default is src
+    # Name of your output file (.pdx)
+    output: # optional, default is app.pdx
+    # Strip debug symbols
+    strip: # optional, default is true
+    # Compress output files
+    compress: # optional, default is true
+    # Create a .tar.gz of the output after compiling
+    package: # optional, default is true
+    # Compiler version to use
+    version: # optional, default is latest
+    - name: playstation-box
+  # You may pin to the exact commit or the version.
+  # uses: Swilder-M/playstation-box@148957a23091ce49ebd809693a193b167ebae587
+  uses: Swilder-M/playstation-box@v1.4
+  - name: Upload Android App to Play Store
+  # You may pin to the exact commit or the version.
+  # uses: bbjoern/upload-google-play@819c710bc648f63b7a1e668b0e59af8b2addaf57
+  uses: bbjoern/upload-google-play@v0.0.6
+  with:
+    # The service account json private key file to authorize the upload request
+    serviceAccountJson: # optional
+    # The raw json text of the service account private key to authorize the upload request
+    serviceAccountJsonPlainText: # optional
+    # The package name, or Application Id, of the app you are uploading
+    packageName: 
+    # The Android release file to upload (.apk or .aab)
+    releaseFile: # optional
+    # The Android release file(s) to upload (.apk or .aab). Separated by  a ',' for multiple artifacts. Supports glob
+    releaseFiles: # optional
+    # The name of this release. If not set it's generated automatically from the APKs versionName
+    releaseName: # optional
+    # The track in which you want to assign the uploaded app.
+    track: # default is production
+    # In-app update priority of the release. All newly added APKs in the release will be considered at this priority. Can take values in the range [0, 5], with 5 the highest priority. Defaults to 0.
+    inAppUpdatePriority: # optional, default is 0
+    # Portion of users who should get the staged version of the app. Accepts values between 0.0 and 1.0 (exclusive-exclusive).
+    userFraction: # optional
+    # Release status. This can be set to 'draft' to complete the release at some other time.
+    status: # optional
+    # The directory of localized whats new files
+    whatsNewDirectory: # optional
+    # The mapping.txt file used to de-obfuscate your stack traces from crash reports
+    mappingFile: # optional
+    - name: Upload App to Google Play Console
+  # You may pin to the exact commit or the version.
+  # uses: lukasa1993/android-upload-google-play@63c130697f6fd3814b6c4ce0c7f6b5e278ae5b02
+  uses: lukasa1993/android-upload-google-play@v2.1.2
+  with:
+    # Service account file created from Google Cloud Console
+    service-account: 
+    # Bundle or APK file to release
+    release-file: 
+    # Android app package name or applicationId
+    package-name: 
+    # 'production', 'alpha', 'beta', 'internal'
+    track: 
+    # 'draft', 'complete'
+    status: # optional, default is draft
+    # 
+    mapping-file: # optional
+    # Directory for release note with multi-language supported. (BCP-47 language tag)
+    whatsnew-directory: # optional
+    - name: Upload Android application to Play Store
+  # You may pin to the exact commit or the version.
+  # uses: Swootte/upload-google-play@5707062d0b7c8881125e08102aab863c7de1b329
+  uses: Swootte/upload-google-play@V1.1.5
+  with:
+    # The service account json private key file to authorize the upload request
+    serviceAccountJson: # optional
+    # The raw json text of the service account private key to authorize the upload request
+    serviceAccountJsonPlainText: # optional
+    # The package name, or Application Id, of the app you are uploading
+    packageName: 
+    # The Android release file to upload (.apk or .aab)
+    releaseFile: # optional
+    # The Android release file(s) to upload (.apk or .aab). Separated by  a ',' for multiple artifacts. Supports glob
+    releaseFiles: # optional
+    # The name of this release. If not set it's generated automatically from the APKs versionName
+    releaseName: # optional
+    # The track in which you want to assign the uploaded app.
+    track: # default is production
+    # In-app update priority of the release. All newly added APKs in the release will be considered at this priority. Can take values in the range [0, 5], with 5 the highest priority. Defaults to 0.
+    inAppUpdatePriority: # optional, default is 0
+    # Portion of users who should get the staged version of the app. Accepts values between 0.0 and 1.0 (exclusive-exclusive).
+    userFraction: # optional
+    # Release status. This can be set to 'draft' to complete the release at some other time.
+    status: # optional
+    # The directory of localized whats new files
+    whatsNewDirectory: # optional
+    # The mapping.txt file used to de-obfuscate your stack traces from crash reports
+    mappingFile: # optional
+    # If the build should be sent directly to release
+    changesNotSentForReview: 
+    - name: Upload Android application to Play Store
+  # You may pin to the exact commit or the version.
+  # uses: Swootte/upload-google-play@5707062d0b7c8881125e08102aab863c7de1b329
+  uses: Swootte/upload-google-play@V1.1.5
+  with:
+    # The service account json private key file to authorize the upload request
+    serviceAccountJson: # optional
+    # The raw json text of the service account private key to authorize the upload request
+    serviceAccountJsonPlainText: # optional
+    # The package name, or Application Id, of the app you are uploading
+    packageName: 
+    # The Android release file to upload (.apk or .aab)
+    releaseFile: # optional
+    # The Android release file(s) to upload (.apk or .aab). Separated by  a ',' for multiple artifacts. Supports glob
+    releaseFiles: # optional
+    # The name of this release. If not set it's generated automatically from the APKs versionName
+    releaseName: # optional
+    # The track in which you want to assign the uploaded app.
+    track: # default is production
+    # In-app update priority of the release. All newly added APKs in the release will be considered at this priority. Can take values in the range [0, 5], with 5 the highest priority. Defaults to 0.
+    inAppUpdatePriority: # optional, default is 0
+    # Portion of users who should get the staged version of the app. Accepts values between 0.0 and 1.0 (exclusive-exclusive).
+    userFraction: # optional
+    # Release status. This can be set to 'draft' to complete the release at some other time.
+    status: # optional
+    # The directory of localized whats new files
+    whatsNewDirectory: # optional
+    # The mapping.txt file used to de-obfuscate your stack traces from crash reports
+    mappingFile: # optional
+    # If the build should be sent directly to release
+    changesNotSentForReview: 
+    - name: Upload Android App to Google Play Console
+  # You may pin to the exact commit or the version.
+  # uses: sokchanbo/android-upload-google-play@e2829d354c73d35c802ccaf4b0385bde3137eeee
+  uses: sokchanbo/android-upload-google-play@1.0.0
+  with:
+    # Service account file created from Google Cloud Console
+    service-account: 
+    # Bundle or APK file to release
+    release-file: 
+    # Android app package name or applicationId
+    package-name: 
+    # 'production', 'alpha', 'beta', 'internal'
+    track: 
+    # 
+    mapping-file: # optional
+    # Directory for release note with multi-language supported. (BCP-47 language tag)
+    whatsnew-directory: # optional
+    - name: Update Android Play Store Version Code
+  # You may pin to the exact commit or the version.
+  # uses: lukasa1993/android-version-code-update@f08e9918a996ab8204b5fab5fad58b57a0bca71b
+  uses: lukasa1993/android-version-code-update@v2.0.5
+  with:
+    # The service account json private key file to authorize the upload request
+    serviceAccountJson: 
+    # The package name, or Application Id, of the app you are uploading
+    packageName: 
+    - name: Promote Google Play open testing to production
+  # You may pin to the exact commit or the version.
+  # uses: boswelja/promote-play-beta-action@4ac110fc95cb2dbbe00b993ebca5a8775fc08953
+  uses: boswelja/promote-play-beta-action@v1.0.0
+  with:
+    # The raw json text of the service account private key to authorize the upload request
+    service-account-json-raw: 
+    # The package name, or Application Id, of the app you are editing
+    package-name: 
+    # In-app update priority of the release. All newly added APKs in the release will be considered at this priority. Can take values in the range [0, 5], with 5 the highest priority. Defaults to 0
+    inapp-update-priority: # optional, default is 0
+    # Portion of users who should get the staged version of the app. Accepts values between 0.0 and 1.0 (exclusive-exclusive)
+    user-fraction: # optional
+    - name: Playwright Container
+  # You may pin to the exact commit or the version.
+  # uses: ianwalter/playwright-container@43940dfa7d309fe3569b9df407ae9e84dcbf2e7f
+  uses: ianwalter/playwright-container@v3.0.0
+  - name: Ansible Playwright
+  # You may pin to the exact commit or the version.
+  # uses: aimerib/ansible-playwright@06276a1dd2ac67b31187164a21463632077ffec0
+  uses: aimerib/ansible-playwright@v2.7.7
+  with:
+    # Ansible playbook filepath
+    playbook: 
+    # Ansible Galaxy requirements filepath
+    requirements: # optional
+    # Root directory of Ansible project (defaults to current)
+    directory: # optional
+    # SSH private key used to connect to the host
+    key: # optional
+    # SSH private key used to connect to the host
+    private-key: # optional
+    # SSH User to use when connecting to host
+    user: # optional
+    # Custom content to write into hosts
+    inventory: # optional
+    # The password used for decrypting vaulted files
+    vault_password: # optional
+    # Contents of SSH known_hosts file
+    known_hosts: # optional
+    # Extra options that should be passed to ansible-playbook command
+    options: # optional
+    # Set to "true" if root is required for running your playbook
+    sudo: # optional
+    # Set to "true" if the Ansible output should not include colors (defaults to "false")
+    no_color: # optional
+    - name: Azure-PlayFab Function Sync
+  # You may pin to the exact commit or the version.
+  # uses: rudyatkinson/azure-playfab-function-sync@7027dac7a0181b17feee974dc026e194a0ecf410
+  uses: rudyatkinson/azure-playfab-function-sync@v1.1.0
+  with:
+    # The secret key required for register functions. You can obtain from PlayFab title.
+    playfab-developer-secret-key: 
+    # PlayFab title id that will be updated with function app urls.
+    playfab-title-id: 
+    # Subscription id which is includes function app.
+    azure-subscription-id: 
+    # Resource group name which is includes function app.
+    azure-resource-group: 
+    # The function app that will be uploaded.
+    azure-function-app-name: 
+    # Playfab functions which are does not contains at Azure function app will be unregistered.
+    playfab-unregister-unused-functions: # optional
+    # App Id that taken from azure portal is required to login with az cli in action.
+    azure-login-app-id: # optional, default is 
+    # Secret Value that taken from azure portal is required to login with az cli in action.
+    azure-login-secret-value: # optional, default is 
+    # Tenant Id that taken from azure portal is required to login with az cli in action.
+    azure-login-tenant-id: # optional, default is 
+    - name: Ansible Playbook Runner
+  # You may pin to the exact commit or the version.
+  # uses: euclid1990/actions-ansible@5794972a0da8316eb1f251cfc0acddcef1553525
+  uses: euclid1990/actions-ansible@v2
+  with:
+    # Ansible inventory to use
+    inventory: # default is inventory.yml
+    # Ansible playbook to run
+    playbook: # default is playbook.yml
+    - name: Azure-PlayFab Function Sync
+  # You may pin to the exact commit or the version.
+  # uses: rudyatkinson/azure-playfab-function-sync@7027dac7a0181b17feee974dc026e194a0ecf410
+  uses: rudyatkinson/azure-playfab-function-sync@v1.1.0
+  with:
+    # The secret key required for register functions. You can obtain from PlayFab title.
+    playfab-developer-secret-key: 
+    # PlayFab title id that will be updated with function app urls.
+    playfab-title-id: 
+    # Subscription id which is includes function app.
+    azure-subscription-id: 
+    # Resource group name which is includes function app.
+    azure-resource-group: 
+    # The function app that will be uploaded.
+    azure-function-app-name: 
+    # Playfab functions which are does not contains at Azure function app will be unregistered.
+    playfab-unregister-unused-functions: # optional
+    # App Id that taken from azure portal is required to login with az cli in action.
+    azure-login-app-id: # optional, default is 
+    # Secret Value that taken from azure portal is required to login with az cli in action.
+    azure-login-secret-value: # optional, default is 
+    # Tenant Id that taken from azure portal is required to login with az cli in action.
+    azure-login-tenant-id: # optional, default is 
+    - name: ansible-playbook-with-keyvault
+  # You may pin to the exact commit or the version.
+  # uses: ministryofjustice/ansible-playbook-with-keyvault-action@23ad9b45cc1fe41e9dc5a0717b5ff8737ec9b6b7
+  uses: ministryofjustice/ansible-playbook-with-keyvault-action@v1.1
+  with:
+    # If azure login required, the secret containing azure credentials, i.e. output of `az ad sp create-for-rbac`
+    azure_creds: # optional
+    # Name of the azure key vault
+    keyvault_name: # optional
+    # The name of the key vault secret that holds the ssh password
+    keyvault_secret_name_ssh_password: # optional
+    # The name of the key vault secret that holds the ansible vault password
+    keyvault_secret_name_vault_password: # optional
+    # The name of the key vault secret that holds the ssh private key
+    keyvault_secret_name_ssh_privkey: # optional
+    # Optional txt filename to write the ssh password to
+    ssh_password_txt_filename: # optional, default is ansible_pass
+    # The filename to write the ssh private key to
+    ssh_privkey_filename: # optional, default is ansible_key
+    # The filename to write the vault password to
+    vault_password_filename: # optional, default is .vault.txt
+    # The yaml filename to write extra variables to
+    extra_vars_yaml_filename: # optional, default is extravars.yaml
+    # Directory containing ansible code
+    ansible_dir: 
+    # Location of ansible playbook
+    ansible_playbook: 
+    # Location of ansible inventory
+    ansible_inventory: # optional
+    # Optionally limit to comma separated set of hosts or targets
+    ansible_limit: # optional
+    # The username to use for -u, remote_user, ansible_user options
+    ansible_user: # optional
+    # Pipe separated additional variables to pass in as -e option (via yamlfile), e.g. "foo=bar|abc=def"
+    ansible_vars: # optional
+    # Pipe separated ansible args e,g, "--verbose|--check|--foo bar
+    ansible_args: # optional
+    # Location of ansible config
+    ansible_config: # optional
+    # For debugging the action, e.g. showCliOutput,hideAnsibleOutput,noCleanup,noAnsible
+    action_settings: # optional
+    - name: Napptive Playground action
+  # You may pin to the exact commit or the version.
+  # uses: napptive-actions/playground-github-action@a92dd3dd4b1ebae448d263f90ee606543400dae3
+  uses: napptive-actions/playground-github-action@v6.0.2
+  with:
+    # Debug flag in commands
+    debug: # optional
+    # Command to execute
+    cmd: 
+    # To specify a target account/environment
+    environment: # optional
+    # To use a custom YAML file to change the target playground installation
+    playgroundConfigFile: # optional
+    - name: Get the next version code
+  # You may pin to the exact commit or the version.
+  # uses: mmachado53/google-play-next-version-code@18668ee47f77ba7f125257f18f63a966fc4c5529
+  uses: mmachado53/google-play-next-version-code@v0.0.5
+  with:
+    # The json file of the service account private key to authorize access to google play console api data
+    serviceAccountJsonFile: 
+    # The package name, of the app
+    packageName: 
+    - name: Upload Android Release to Play Store (internal track publishing is default)
+  # You may pin to the exact commit or the version.
+  # uses: devussy/upload-google-play@a2efb028268d70c139289995ac4ffa2ab1d62b2c
+  uses: devussy/upload-google-play@v1.0.6
+  with:
+    # The service account json private key file to authorize the upload request
+    serviceAccountJson: # optional
+    # The raw json text of the service account private key to authorize the upload request
+    serviceAccountJsonPlainText: # optional
+    # The package name, or Application Id, of the app you are uploading
+    packageName: 
+    # The Android release file to upload (.apk or .aab)
+    releaseFile: 
+    # The track in which you want to assign the uploaded app.
+    track: # default is production
+    # Portion of users who should get the staged version of the app. Accepts values between 0.0 and 1.0 (exclusive-exclusive).
+    userFraction: # optional
+    # The directory of localized whats new files
+    whatsNewDirectory: # optional
+    # The mapping.txt file used to de-obfuscate your stack traces from crash reports
+    mappingFile: # optional
+    - name: Run Ansible playbook (with AWS support)
+  # You may pin to the exact commit or the version.
+  # uses: maurete/ansible-action@48e4301a78df1a4871d244d2740389cc6830e211
+  uses: maurete/ansible-action@v2
+  with:
+    # Name of the playbook to execute.
+    playbook: 
+    # Extra arguments for the playbook.
+    arguments: # optional
+    # Extra variables for the playbook in YAML syntax.
+    extra_vars_yaml: # optional
+    # Working directory.
+    working_directory: # optional
+    # AWS Access Key ID.
+    aws_access_key_id: # optional
+    # AWS Secret Access Key.
+    aws_secret_access_key: # optional
+    # AWS Session Token
+    aws_session_token: # optional
+    # AWS Region, e.g. us-east-1
+    aws_region: # optional
+    - name: Ready-to-use Ansible-Playbook environment
+  # You may pin to the exact commit or the version.
+  # uses: Sakul6499/GitHub-Action-Ansible@53c1a63195db6c2665016ab369d121f65f81a5aa
+  uses: Sakul6499/GitHub-Action-Ansible@v0.0.1
+  with:
+    # The main Ansible-Playbook file (your root file)
+    playbook_file: 
+    # The Ansible inventory file (list your target hosts in here)
+    inventory_file: 
+    # The Ansible requirements file (list your non-`buildin` modules here)
+    requirements_file: # optional
+    # The working directory for the LaTeX engine
+    working_directory: # optional
+    # Arguments parsed to the LaTeX compiler
+    additional_arguments: # optional, default is -vv
+    # Shell commands to execute _BEFORE_ executing the Ansible-Playbook
+    pre_task: # optional
+    # Shell commands to execute _AFTER_ executing the Ansible-Playbook
+    post_task: # optional
+    - name: Run playbook on Ansible Tower
+  # You may pin to the exact commit or the version.
+  # uses: vortegon/github-action-ansible-tower@f8da53fc7ea0e66e3011ed1182e3b1f3a60a48e7
+  uses: vortegon/github-action-ansible-tower@v1.0.5
+  with:
+    # Ansible Tower User
+    ansible-tower-user: 
+    # Ansible Tower Password
+    ansible-tower-pass: 
+    # Ansible Tower URL
+    ansible-tower-url: 
+    # Extra vars required by the ansible playbook
+    additional-vars: 
+    # Template id on Ansible Tower
+    template-id: 
+    - name: Browser Platform Publisher
+  # You may pin to the exact commit or the version.
+  # uses: PlasmoHQ/bpp@ba887a93e8ed778819c630e0e943f06190e4545d
+  uses: PlasmoHQ/bpp@v3.5.0
+  with:
+    # A JSON string containing the keys to be used for the submission process. (This should be a secret)
+    keys: 
+    # The extension zip artifact to be published.
+    artifact: # optional
+    # This is an alias to artifact argument.
+    zip: # optional
+    # This is an alias to artifact argument.
+    file: # optional
+    # The path to the Chrome extension zip file.
+    chrome-file: # optional
+    # The path to the Firefox extension zip file.
+    firefox-file: # optional
+    # The path to the Edge extension zip file.
+    edge-file: # optional
+    # The path to the Opera extension zip file.
+    opera-file: # optional
+    # A release note cataloging changes. (Edge only)
+    notes: # optional
+    # This is an alias to notes argument.
+    edge-notes: # optional
+    # Print out more verbose logging.
+    verbose: # optional
+    # The path to a json file with a version field, default to package.json.
+    version-file: # optional
+  - name: Run playbook on Ansible Tower
+  # You may pin to the exact commit or the version.
+  # uses: vortegon/github-action-ansible-tower@f8da53fc7ea0e66e3011ed1182e3b1f3a60a48e7
+  uses: vortegon/github-action-ansible-tower@v1.0.5
+  with:
+    # Ansible Tower User
+    ansible-tower-user: 
+    # Ansible Tower Password
+    ansible-tower-pass: 
+    # Ansible Tower URL
+    ansible-tower-url: 
+    # Extra vars required by the ansible playbook
+    additional-vars: 
+    # Template id on Ansible Tower
+    template-id: 
+    - name: Run Ansible playbook
+  # You may pin to the exact commit or the version.
+  # uses: dawidd6/action-ansible-playbook@5d970176ea4bfd99a3f5004d48e293fe0994eda1
+  uses: dawidd6/action-ansible-playbook@v2.6.1
+  with:
+    # Ansible playbook filepath
+    playbook: 
+    # Ansible Galaxy requirements filepath
+    requirements: # optional
+    # Root directory of Ansible project (defaults to current)
+    directory: # optional
+    # SSH private key used to connect to the host
+    key: # optional
+    # Custom content to write into hosts
+    inventory: # optional
+    # The password used for decrypting vaulted files
+    vault_password: # optional
+    # Contents of SSH known_hosts file
+    known_hosts: # optional
+    # Extra options that should be passed to ansible-playbook command
+    options: # optional
+    # Set to "true" if root is required for running your playbook
+    sudo: # optional
+    # Set to "true" if the Ansible output should not include colors (defaults to "false")
+    no_color: # optional
+    - name: Execute Ansible Playbook
+  # You may pin to the exact commit or the version.
+  # uses: saubermacherag/ansible-playbook-docker-action@6504ab82647581a928477ecb9c6d52f11fc6843f
+  uses: saubermacherag/ansible-playbook-docker-action@v1.4
+  with:
+    # Name of the playbook in your workspace.
+    playbookName: 
+    # Name of the inventory file to use.
+    inventoryFile: # optional
+    # name of the requirements file to use.
+    requirementsFile: # optional
+    # If you use private github repositories in your requirements file you need to set galaxyGithubUser and galaxyGithub token.
+    galaxyGithubUser: # optional
+    # Token to access git source of roles to download. Only needed for private git sources. Github Account needs to be linked to Ansible Galaxy.
+    galaxyGithubToken: # optional
+    # If inventoryFile is set you can also specify a custom roles path to install your required roles in.
+    rolesPath: # optional
+    # Keyfile to use for host connections.
+    keyFile: # optional
+    # Vault Password to decrypt keyFile.
+    keyFileVaultPass: # optional
+    # String containing all extraVars which you want to be injected into the run.
+    extraVars: # optional
+    # File containing extra vars.
+    extraFile: # optional
+    # Choose one of 4 verbosity levels. See Ansible documentation for details.
+    verbosity: # optional
+    - name: Play Ansible Playbook
+  # You may pin to the exact commit or the version.
+  # uses: arillso/action.playbook@3fe70feea80fe2b79ba4f26d800bb17637e2b828
+  uses: arillso/action.playbook@0.0.5
+  with:
+    # Name of the galaxy file in your workspace.
+    galaxy_file: # optional
+    # Name of the inventory file in your workspace.
+    inventory: 
+    # Name of the playbook in your workspace.
+    playbook: 
+    # Further limit selected hosts to an additional pattern.
+    limit: # optional
+    # Only run plays and tasks whose tags do not match these values.
+    skip_tags: # optional
+    # Start the playbook at the task matching this name.
+    start_at_task: # optional
+    # Only run plays and tasks tagged with these values.
+    tags: # optional
+    # Set additional variables as key=value.
+    extra_vars: # optional
+    # Prepend paths to module library.
+    module_path: # optional
+    # Run a check, do not apply any changes.
+    check: # optional
+    # When changing (small) files and templates, show the differences in those files; works great with –check.
+    diff: # optional
+    # Clear the fact cache for every host in inventory.
+    flush_cache: # optional
+    # Run handlers even if a task fails.
+    force_handlers: # optional
+    # Outputs a list of matching hosts.
+    list_hosts: # optional
+    # List all available tags.
+    list_tags: # optional
+    # List all tasks that would be executed.
+    list_tasks: # optional
+    # Perform a syntax check on the playbook.
+    syntax_check: # optional
+    # Specify number of parallel processes to use.
+    forks: # optional
+    # The vault identity to use.
+    vault_id: # optional
+    # The vault password to use.
+    vault_password: # optional
+    # Level of verbosity, 0 up to 4.
+    verbose: # optional
+    # Use this key to authenticate the connection.
+    private_key: # optional
+    # Connect as this user.
+    user: # optional
+    # Connection type to use.
+    connection: # optional
+    # Override the connection timeout in seconds.
+    timeout: # optional
+    # Specify common arguments to pass to sftp/scp/ssh.
+    ssh_common_args: # optional
+    # Specify extra arguments to pass to sftp only.
+    sftp_extra_args: # optional
+    # Specify extra arguments to pass to scp only.
+    scp_extra_args: # optional
+    # Specify extra arguments to pass to ssh only.
+    ssh-extra-args: # optional
+    # Run operations with become.
+    become: # optional
+    # Privilege escalation method to use.
+    become_method: # optional
+    # Run operations as this user.
+    become_user: # optional 
+    - name: Azure PostgreSQL Action
+  uses: Azure/postgresql@v1.2.0
+  with:
+    # Server name of Azure DB for PostgreSQL. Example: fabrikam.postgres.database.azure.com
+    server-name: 
+    # The connection string, including authentication information, for the Azure PostgreSQL Server. Please provide psql connection string. Example: psql "host={host} port={port} dbname={your_database} user={user} password={your_password} sslmode=require"
+    connection-string: 
+    # Path to PL/SQL script file to deploy. To specify multiple files, use the regex syntax : *.sql or folder/x/<regex>.sql
+    plsql-file: 
+    # Additional options supported by postgresql simple SQL shell. These options will be applied when executing the given file on the Azure DB for Postgresql. In case of multiple files, the same args will be applied for all files
+    arguments: # optional
+    - name: Platformer Deployer
+  # You may pin to the exact commit or the version.
+  # uses: platformercloud/build-deploy-action@fe0bfc7741005f36e8beff3861c6815c95cc0ae8
+  uses: platformercloud/build-deploy-action@v1
+  with:
+    # Platformer API Domain. Typically (https://api.platformer.com)
+    domain: # optional, default is https://beta.api.platformer.com
+    # Platformer Organization ID
+    org-id: # default is 
+    # Platformer Project ID
+    project-id: # default is 
+    # Name of the image
+    image-name: # default is 
+    # Name of the built tag
+    tag: # default is latest
+    # For Direct environment deployments
+    container-id: # optional, default is 
+    # To just push to the Platformer Registry and update all asscociated containers which has auto deploy turned on
+    image-registry-id: # optional, default is 
+    # Channels allow you to version your builds within Platformer Console
+    channel: # optional, default is default
+    # How platformer should version update the image (patch,minor,major)
+    update-type: # optional, default is patch
+    # Service Account token for Platformer. (Mount on Secrets)
+    token: # default is 
+    - name: terraform-plan-storage
+  # You may pin to the exact commit or the version.
+  # uses: cloudposse/github-action-terraform-plan-storage@68f48c4cab5d6163d634df904ef654b7e69c4e1f
+  uses: cloudposse/github-action-terraform-plan-storage@1.6.2
+  with:
+    # which action to perform. Valid values are: 'storePlan', 'getPlan', 'taintPlan'
+    action: # default is storePlan
+    # path to the Terraform plan file. Required for 'storePlan' and 'getPlan' actions
+    planPath: # optional
+    # the name of the dynamodb table to store metadata
+    tableName: # default is terraform-plan-storage
+    # the name of the S3 bucket to store the plan file
+    bucketName: # default is terraform-plan-storage
+    # the name of the component corresponding to the plan file
+    component: # optional
+    # the name of the stack corresponding to the plan file
+    stack: # optional
+    - name: DigitalOcean App Platform deployment
+  # You may pin to the exact commit or the version.
+  # uses: digitalocean/app_action@e583e1b463e8ac378854c0a01af1de8a5afd836b
+  uses: digitalocean/app_action@v1.1.5
+  with:
+    # Name of the app. (The name of the app must be unique across all apps in the same account.)
+    app_name: 
+    # DigitalOcean Personal Access Token.(use https://docs.digitalocean.com/reference/api/create-personal-access-token/ for creating new token)
+    token: 
+    # (OPTIONAL)a json array of objects with the properties name (description), repository (repo url), tag (image tag)
+    images: # optional, default is 
+    - name: Plugin Machine WordPress Plugin Builder
+  # You may pin to the exact commit or the version.
+  # uses: imaginarymachines/builder-action@7fdf020e97b55512bd6081723b3bc3996dfc7a33
+  uses: imaginarymachines/builder-action@1.0.0
+  with:
+    # Plugin Machine Token
+    PLUGIN_MACHINE_TOKEN: 
+    # GitHub token
+    GITHUB_TOKEN: 
+    # Directory with plugin
+    PLUGIN_DIR: # optional
+    # If a link to ZIP should be added to PR
+    COMMENT_PR: # optional
+    - name: ServiceNow CI/CD Rollback Plugin
+  # You may pin to the exact commit or the version.
+  # uses: ServiceNow/sncicd-plugin-rollback@600e3f11252fa6690ea329d129854eed2ed3f291
+  uses: ServiceNow/sncicd-plugin-rollback@2.0.0
+  with:
+    # Plugin ID to be rolled back
+    pluginID: 
+    - name: Platformer Deployer
+  # You may pin to the exact commit or the version.
+  # uses: platformercloud/build-deploy-action@fe0bfc7741005f36e8beff3861c6815c95cc0ae8
+  uses: platformercloud/build-deploy-action@v1
+  with:
+    # Platformer API Domain. Typically (https://api.platformer.com)
+    domain: # optional, default is https://beta.api.platformer.com
+    # Platformer Organization ID
+    org-id: # default is 
+    # Platformer Project ID
+    project-id: # default is 
+    # Name of the image
+    image-name: # default is 
+    # Name of the built tag
+    tag: # default is latest
+    # For Direct environment deployments
+    container-id: # optional, default is 
+    # To just push to the Platformer Registry and update all asscociated containers which has auto deploy turned on
+    image-registry-id: # optional, default is 
+    # Channels allow you to version your builds within Platformer Console
+    channel: # optional, default is default
+    # How platformer should version update the image (patch,minor,major)
+    update-type: # optional, default is patch
+    # Service Account token for Platformer. (Mount on Secrets)
+    token: # default is 
+    - name: GraphQL Pluck
+  # You may pin to the exact commit or the version.
+  # uses: w33ble/graphql-pluck-action@8840b9abe275982e98573304024e12cefa863b07
+  uses: w33ble/graphql-pluck-action@v1.4.0
+  with:
+    # code file with graphql-tag code to pluck
+    source: 
+    # file to write plucked graphql schemas
+    output: # optional
+    - name: Terraform Plan for AZURE
+  # You may pin to the exact commit or the version.
+  # uses: Pwd9000-ML/terraform-azurerm-plan@b7c81db4a4629262b10e5b56475a9712fe45d0d1
+  uses: Pwd9000-ML/terraform-azurerm-plan@v1.2.5
+  with:
+    # (Optional) Specifies the path of the root terraform module.
+    path: # optional, default is .
+    # (Optional) Specify plan mode. Valid options are "deploy" or "destroy". Default=deploy.
+    plan_mode: # optional, default is deploy
+    # (Optional) Specifies version of Terraform to use. e.g: 1.1.0 Default=latest.
+    tf_version: # optional, default is latest
+    # (Required) Specifies the Terraform TFVARS file relevant to module path.
+    tf_vars_file: 
+    # (Required) Specifies the Terraform state file name for this plan.
+    tf_key: 
+    # (Required) Specifies the Azure Resource Group where the backend storage account is hosted.
+    az_resource_group: 
+    # (Required) Specifies the Azure Storage Account where the backend state is hosted.
+    az_storage_acc: 
+    # (Required) Specifies the Azure Storage account container where backend Terraform state is hosted.
+    az_container_name: 
+    # (Optional) Enables TFSEC IaC scans and code quality checks on Terraform configurations
+    enable_TFSEC: # optional
+    # Specifies the Azure ARM CLIENT ID.
+    arm_client_id: 
+    # Specifies the Azure ARM CLIENT SECRET.
+    arm_client_secret: 
+    # Specifies the Azure ARM SUBSCRIPTION ID.
+    arm_subscription_id: 
+    # Specifies the Azure ARM TENANT ID.
+    arm_tenant_id: 
+    # Specify a valid GITHUB TOKEN.
+    github_token: 
+    - name: Pack WP Plugin
+  # You may pin to the exact commit or the version.
+  # uses: oblakstudio/action-pack-wp-plugin@14c5d860b43b975e1c1204ef6482a4c34f03543c
+  uses: oblakstudio/action-pack-wp-plugin@v1.0.1
+  with:
+    # The slug of the plugin to pack
+    plugin_slug: 
+    # The name of the output file
+    output_file: # optional, default is /tmp/release.zip
+    # A list of files to include in the release
+    include_files: 
+    # The name of the file that contains the version number
+    version_file: 
+   - name: Plugin Machine WordPress Plugin Builder
+  # You may pin to the exact commit or the version.
+  # uses: imaginarymachines/builder-action@7fdf020e97b55512bd6081723b3bc3996dfc7a33
+  uses: imaginarymachines/builder-action@1.0.0
+  with:
+    # Plugin Machine Token
+    PLUGIN_MACHINE_TOKEN: 
+    # GitHub token
+    GITHUB_TOKEN: 
+    # Directory with plugin
+    PLUGIN_DIR: # optional
+    # If a link to ZIP should be added to PR
+    COMMENT_PR: # optional
+    - name: Pack WP Plugin
+  # You may pin to the exact commit or the version.
+  # uses: oblakstudio/action-pack-wp-plugin@14c5d860b43b975e1c1204ef6482a4c34f03543c
+  uses: oblakstudio/action-pack-wp-plugin@v1.0.1
+  with:
+    # The slug of the plugin to pack
+    plugin_slug: 
+    # The name of the output file
+    output_file: # optional, default is /tmp/release.zip
+    # A list of files to include in the release
+    include_files: 
+    # The name of the file that contains the version number
+    version_file: 
+    - name: Run Terraform Plan
+  # You may pin to the exact commit or the version.
+  # uses: patrontech/devops-tf-cloud-run@027ff1fbb3d330405ad86c79d0a18c990db7fc2d
+  uses: patrontech/devops-tf-cloud-run@v1.0.4
+  with:
+    # Terraform workspace name
+    workSpaceName: 
+    # Terraform organization Name
+    organizationName: 
+    # Terraform Token
+    terraformToken: 
+    # Terraform Host Name
+    terraformHost: 
+    # Specifies if this plan is a destroy plan, which will destroy all provisioned resources
+    isDestroy: 
+    # Specifies the message to be associated with this run.
+    message: 
+    # Specifies if the run should be started
+    startRun: 
+    - name: Action Platform
+  # You may pin to the exact commit or the version.
+  # uses: adam7/platformsh-cli-action@38220101578b379fbc42ab803e6d3fdd3b42a0ef
+  uses: adam7/platformsh-cli-action@v1.2
+  with:
+    # Your platform.sh API token https://docs.platform.sh/development/cli/api-tokens.html
+    token: 
+    # The version of the CLI to install, defaults to latest
+    version: # optional, default is latest
+  - name: WP Plugin Deploy
+  # You may pin to the exact commit or the version.
+  # uses: lattepress/wp-deployer-action@4d8629b50ea8d913b1eca6d04a968ce30afac435
+  uses: lattepress/wp-deployer-action@1.0.0
+  with:
+    # Generate package zip file?
+    generate-zip: # optional
+    - name: Ansible Playwright
+  # You may pin to the exact commit or the version.
+  # uses: aimerib/ansible-playwright@06276a1dd2ac67b31187164a21463632077ffec0
+  uses: aimerib/ansible-playwright@v2.7.7
+  with:
+    # Ansible playbook filepath
+    playbook: 
+    # Ansible Galaxy requirements filepath
+    requirements: # optional
+    # Root directory of Ansible project (defaults to current)
+    directory: # optional
+    # SSH private key used to connect to the host
+    key: # optional
+    # SSH private key used to connect to the host
+    private-key: # optional
+    # SSH User to use when connecting to host
+    user: # optional
+    # Custom content to write into hosts
+    inventory: # optional
+    # The password used for decrypting vaulted files
+    vault_password: # optional
+    # Contents of SSH known_hosts file
+    known_hosts: # optional
+    # Extra options that should be passed to ansible-playbook command
+    options: # optional
+    # Set to "true" if root is required for running your playbook
+    sudo: # optional
+    # Set to "true" if the Ansible output should not include colors (defaults to "false")
+    no_color: # optional
+- name: Planetscale Action
+  # You may pin to the exact commit or the version.
+  # uses: barelylabs/planetscale-action@8b0b8c1a46ae2c2a8a69a4b6cb05c5fd7c748378
+  uses: barelylabs/planetscale-action@v0.1.3-alpha
+  with:
+    # accepts 'create-branch', 'open-deploy-request', 'queue-deploy-request', or 'delete-branch'
+    action: 
+    # The parent branch to create a new dev branch from, or merge current dev branch into. Defaults to main.
+    parent-branch-name: # optional
+    # The name of the dev branch. Defaults to name of current git branch.
+    branch-name: # optional
+    # Whether to overwrite an existing dev branch. Defaults to false.
+    overwrite-existing-branch: # optional
+   - name: Setup Plural
+  # You may pin to the exact commit or the version.
+  # uses: pluralsh/setup-plural@732c38c7deb4c8f26545a12c4b167bca31e2465d
+  uses: pluralsh/setup-plural@v0.1.5
+  with:
+    # Plural Config File
+    config: 
+    # the plural cli version to use
+    vsn: # optional, default is 0.5.18
+    # the cli platform to specify
+    plat: # optional, default is amd64
+- name: Action Platform
+  # You may pin to the exact commit or the version.
+  # uses: adam7/platformsh-cli-action@38220101578b379fbc42ab803e6d3fdd3b42a0ef
+  uses: adam7/platformsh-cli-action@v1.2
+  with:
+    # Your platform.sh API token https://docs.platform.sh/development/cli/api-tokens.html
+    token: 
+    # The version of the CLI to install, defaults to latest
+    version: # optional, default is latest
+- name: Jellyfin plugin repo
+  # You may pin to the exact commit or the version.
+  # uses: Kevinjil/jellyfin-plugin-repo-action@00d141bf7359513e0e24bae4dce7172414923fd4
+  uses: Kevinjil/jellyfin-plugin-repo-action@v0.4.1
+  with:
+    # The GitHub authentication token to use in the action.
+    githubToken: 
+    # The GitHub repository name of the plugin source repo in format "user/repo-name".
+    repository: 
+    # The GitHub pages source branch on which the repository file is committed.
+    pagesBranch: # optional, default is gh-pages
+    # The file path to which the repository json file is committed.
+    pagesFile: # optional, default is repository.json
+    # Whether pre-releases should be ignored when generating the repository file.
+    ignorePrereleases: # optional, default is false
+    - name: Action Plugin Deploy
+  # You may pin to the exact commit or the version.
+  # uses: sultann/action-plugin-deploy@334c4a08c4c463d81644e73a47096a57c2f20120
+  uses: sultann/action-plugin-deploy@v1.0.1
+  with:
+    # SVN slug
+    svn_slug: # default is ${{ github.event.repository.name }}
+    # SVN username
+    svn_username: # default is 
+    # SVN password
+    svn_password: # default is 
+    # Working directory
+    working_dir: # optional, default is ${{ github.workspace }}
+    # Version
+    version: # optional, default is 
+    # Dry run
+    dry_run: # optional, default is false
+ - name: Install DNSControl (cross-platform)
+  # You may pin to the exact commit or the version.
+  # uses: gacts/install-dnscontrol@6c12a72f71ae28575106b6852cd533dcb8350096
+  uses: gacts/install-dnscontrol@v1.1.0
+  with:
+    # DNSControl version
+    version: # default is latest
+    # GitHub auth token. Since there's a default, this is typically not supplied by the user
+    github-token: # optional, default is ${{ github.token }}   
+  - name: Eleventy Action Plus RSS
+  # You may pin to the exact commit or the version.
+  # uses: cagov/actions-eleventy@c2ec15add07aef8a634643b89aa7284861998864
+  uses: cagov/actions-eleventy@3.1
+  with:
+    # Arguments to pass to the Eleventy invocation
+    args: # optional
+   - name: Xcode Notarize Please
+  # You may pin to the exact commit or the version.
+  # uses: adriweb/xcode-notarize-please@36a8cd643b92e34a79e35e69e74dff488b75861d
+  uses: adriweb/xcode-notarize-please@v1.1
+  with:
+    # Path to the product to notarize.
+    product-path: 
+    # The AppStore Connect username.
+    appstore-connect-username: # optional
+    # The AppStore Connect password.
+    appstore-connect-password: # optional
+    # The AppStore Connect API Key.
+    appstore-connect-api-key: # optional
+    # The AppStore Connect API Issuer.
+    appstore-connect-api-issuer: # optional
+    # Unique identifier that identifies this product notarization. Defaults to the bundle identifier of the app you are uploading.
+    primary-bundle-id: # optional
+    # Verbose mode will print Notarization API responses.
+    verbose: # optional
+    - name: Deploy to platform.sh
+  # You may pin to the exact commit or the version.
+  # uses: axelerant/platformsh-deploy-action@3fc07d71fb5d89fde201553d05168b6243f7e2d4
+  uses: axelerant/platformsh-deploy-action@v1.3.1
+  with:
+    # Project ID on platform.sh
+    project-id: 
+    # Token for platform.sh CLI
+    cli-token: 
+    # SSH key to access the git repository on platform.sh
+    ssh-private-key: # optional
+    # PHP version to setup for the CLI
+    php-version: # default is 8.0
+    # Force push to Platform.sh
+    force-push: # optional
+    # Name of the platform.sh instance
+    environment-name: # optional
+    - name: Action Plugin Deploy
+  # You may pin to the exact commit or the version.
+  # uses: sultann/action-plugin-deploy@334c4a08c4c463d81644e73a47096a57c2f20120
+  uses: sultann/action-plugin-deploy@v1.0.1
+  with:
+    # SVN slug
+    svn_slug: # default is ${{ github.event.repository.name }}
+    # SVN username
+    svn_username: # default is 
+    # SVN password
+    svn_password: # default is 
+    # Working directory
+    working_dir: # optional, default is ${{ github.workspace }}
+    # Version
+    version: # optional, default is 
+    # Dry run
+    dry_run: # optional, default is false
+- name: Install nomad (cross-platform)
+  # You may pin to the exact commit or the version.
+  # uses: gacts/install-nomad@0ec16369e661c7a414f530dca386663964d2d4fd
+  uses: gacts/install-nomad@v1.1.2
+  with:
+    # Nomad version
+    version: # default is latest
+    # GitHub auth token. Since there's a default, this is typically not supplied by the user
+    github-token: # optional, default is ${{ github.token }}
+  - name: Ploi Deploy Action
+  # You may pin to the exact commit or the version.
+  # uses: Glennmen/ploi-deploy-action@b6970cca789d0167ec08019bcfa75e5995761fa5
+  uses: Glennmen/ploi-deploy-action@v1.2.0
+  with:
+    # The Deploy webhook URL
+    webhook_url: # optional
+    # Ploi API token
+    api_token: # optional
+    # Ploi Server ID
+    server_id: # optional
+    # Ploi Site ID
+    site_id: # optional
+    - name: tw5-plugin-packer
+  # You may pin to the exact commit or the version.
+  # uses: tiddly-gittly/tw5-plugin-packer@435e61877ed262eb42832f7232dd86919ebc6377
+  uses: tiddly-gittly/tw5-plugin-packer@v0.0.13
+  with:
+    # The root directory of your plugin. You can add multiple paths in the form of one per line.
+    source: 
+    # The output path of the packed plugin files, default to "output".
+    output: # optional, default is output
+    # Wheter to minify js and css tiddlers, default to "true".
+    minify: # optional, default is true
+    # JSON string of options for UglifyJS. See readme for default values.
+    uglifyjs-options: # optional, default is 
+    # JSON string of options for CleanCSS. See readme for default values.
+    cleancss-options: # optional, default is 
+    - name: WordPress Plugin SVN Deploy
+  # You may pin to the exact commit or the version.
+  # uses: nk-o/action-wordpress-plugin-deploy@da321e756321e0659ec59c27bb3369a00c8eb117
+  uses: nk-o/action-wordpress-plugin-deploy@v0.0.5
+  - name: Koha Plugin kpz Builder
+  # You may pin to the exact commit or the version.
+  # uses: bywatersolutions/github-action-koha-plugin-create-kpz@78737a0c01ae96bb3af83960ebaa48a8d2878a36
+  uses: bywatersolutions/github-action-koha-plugin-create-kpz@v2
+  with:
+    # Version for this koha plugin release, e.g. v1.0.3
+    release-version: 
+    # Name of plugin repo, e.g. koha-plugin-kitchen-sink
+    release-name: 
+    - name: mdBook Action with plugins
+  # You may pin to the exact commit or the version.
+  # uses: jontze/action-mdbook@b77ea85dc78412d55a86ad8caae5f070aadce1d8
+  uses: jontze/action-mdbook@v2.2.1
+  with:
+    # Github token
+    token: 
+    # mdBook version that should be used (e.g. v0.2.2 or 0.2.2)
+    mdbook-version: # optional, default is latest
+    # Use linkcheck plugin (true / false)
+    use-linkcheck: # optional
+    # linkcheck version that should be used (e.g. v0.2.2 or 0.2.2)
+    linkcheck-version: # optional, default is latest
+    # Use mermaid plugin (true / false)
+    use-mermaid: # optional
+    # mermaid version that should be used
+    mermaid-version: # optional, default is latest
+    # Use toc plugin (true / false)
+    use-toc: # optional
+    # toc version that should be used
+    toc-version: # optional, default is latest
+    # Use open-on-gh plugin (true / false)
+    use-opengh: # optional
+    # open-on-gh version that should be used
+    opengh-version: # optional, default is latest
+    # Use admonish plugin (true / false)
+    use-admonish: # optional
+    # admonish version that should be used
+    admonish-version: # optional, default is latest
+    # Use katex plugin (true / false)
+    use-katex: # optional
+    # katex version that should be used
+    katex-version: # optional, default is latest
+ - name: PlanetScale migrate and deploy
+  # You may pin to the exact commit or the version.
+  # uses: PropFuel/planetscale-migrate-deploy-action@2d0befc6c1af4e9a40542b92eb7752302369d900
+  uses: PropFuel/planetscale-migrate-deploy-action@v1.1.0
+  with:
+    # The PlanetScale service token ID
+    planetscale-service-token-id: 
+    # The PlanetScale service token value
+    planetscale-service-token: 
+    # The PlanetScale organization name
+    planetscale-org-name: 
+    # The PlanetScale database name
+    planetscale-db-name: 
+    # The name of the PlanetScale branch to create
+    branch-name: # optional
+    # The command to run database migrations
+    migrate-command: 
+    # Delete the created branch upon deployment
+    delete-branch: # optional, default is true   
+    - name: ansible-playbook-with-keyvault
+  # You may pin to the exact commit or the version.
+  # uses: ministryofjustice/ansible-playbook-with-keyvault-action@23ad9b45cc1fe41e9dc5a0717b5ff8737ec9b6b7
+  uses: ministryofjustice/ansible-playbook-with-keyvault-action@v1.1
+  with:
+    # If azure login required, the secret containing azure credentials, i.e. output of `az ad sp create-for-rbac`
+    azure_creds: # optional
+    # Name of the azure key vault
+    keyvault_name: # optional
+    # The name of the key vault secret that holds the ssh password
+    keyvault_secret_name_ssh_password: # optional
+    # The name of the key vault secret that holds the ansible vault password
+    keyvault_secret_name_vault_password: # optional
+    # The name of the key vault secret that holds the ssh private key
+    keyvault_secret_name_ssh_privkey: # optional
+    # Optional txt filename to write the ssh password to
+    ssh_password_txt_filename: # optional, default is ansible_pass
+    # The filename to write the ssh private key to
+    ssh_privkey_filename: # optional, default is ansible_key
+    # The filename to write the vault password to
+    vault_password_filename: # optional, default is .vault.txt
+    # The yaml filename to write extra variables to
+    extra_vars_yaml_filename: # optional, default is extravars.yaml
+    # Directory containing ansible code
+    ansible_dir: 
+    # Location of ansible playbook
+    ansible_playbook: 
+    # Location of ansible inventory
+    ansible_inventory: # optional
+    # Optionally limit to comma separated set of hosts or targets
+    ansible_limit: # optional
+    # The username to use for -u, remote_user, ansible_user options
+    ansible_user: # optional
+    # Pipe separated additional variables to pass in as -e option (via yamlfile), e.g. "foo=bar|abc=def"
+    ansible_vars: # optional
+    # Pipe separated ansible args e,g, "--verbose|--check|--foo bar
+    ansible_args: # optional
+    # Location of ansible config
+    ansible_config: # optional
+    # For debugging the action, e.g. showCliOutput,hideAnsibleOutput,noCleanup,noAnsible
+    action_settings: # optional
+    - name: Deploy WordPress plugin
+  # You may pin to the exact commit or the version.
+  # uses: yukihiko-shinoda/action-deploy-wordpress-plugin@e9191f098013f5fb3a4df8a9503e15030e52c1a7
+  uses: yukihiko-shinoda/action-deploy-wordpress-plugin@v2.1.1
+  with:
+    # Expect deploy version only for test mode for CI
+    expect-deploy-version-for-test: # optional, default is 
+    # Deploy version only for test mode for CI
+    deploy-version-for-test: # optional, default is 
+- name: setup-gke-gcloud-auth-plugin
+  # You may pin to the exact commit or the version.
+  # uses: simenandre/setup-gke-gcloud-auth-plugin@d54222d853c0423e3fd4706128ce0076718880fe
+  uses: simenandre/setup-gke-gcloud-auth-plugin@v1.1.2
+  - name: Update yaml files in place
+  # You may pin to the exact commit or the version.
+  # uses: loveholidays/gitops-action-yaml-updater@c603741f5ab74071e3e73e2acfad4d66e529089c
+  uses: loveholidays/gitops-action-yaml-updater@v1.0.0
+  with:
+    # TYPE of the new value to be updated
+    mode: # default is IMAGE_TAG
+    # Name of the container
+    container-name: # default is 
+    # Path to the yaml file
+    filepath: # default is 
+    # Tag value for the new image
+    new-image-tag: # optional, default is 
+    # Env key value present in the container-name
+    env-name: # optional, default is 
+    # New value for env-name
+    new-env-value: # optional, default is 
+  - name: Mindustry Plugin Deploy To Pterodactyl
+  # You may pin to the exact commit or the version.
+  # uses: Itzbenz/mindustry-plugin-deploy-to-pterodactyl@5e136c8f4ecce08f3c83092bc78855a2b9f73bb3
+  uses: Itzbenz/mindustry-plugin-deploy-to-pterodactyl@v1.1
+  with:
+    # The path to the plugin artifact
+    artifact: 
+    # The path to deploy the plugin to
+    target-path: # optional
+    # The API endpoint of the Pterodactyl server e.g. "https://pterodactyl.file.properties/
+    endpoint: 
+    # The ID of the Pterodactyl server
+    server-id: 
+    # The API key of the Pterodactyl server
+    api-key: 
+    # Whether to restart the server after deploying the plugin
+    restart: # optional
+    - name: WordPress Plugin Deploy by NextgenThemes
+  # You may pin to the exact commit or the version.
+  # uses: nextgenthemes/action-wordpress-plugin-deploy@48a2134e8534e9cc64802202b0cb9b1bf800f9e8
+  uses: nextgenthemes/action-wordpress-plugin-deploy@0.5.0
+  with:
+    # 
+    svn_user: 
+    # 
+    svn_pass: 
+    # Is required unless you just update readme and assets
+    version: # optional
+    # Optional relative path to where the main plugin file is.
+    workdir: # optional
+    # Comma separated list of folders to include in distribution.
+    build_dirs: # optional
+    # Use --readme-only or --dry-run
+    switch: # optional
+    - name: Run playbook on Ansible Tower
+  # You may pin to the exact commit or the version.
+  # uses: vortegon/github-action-ansible-tower@f8da53fc7ea0e66e3011ed1182e3b1f3a60a48e7
+  uses: vortegon/github-action-ansible-tower@v1.0.5
+  with:
+    # Ansible Tower User
+    ansible-tower-user: 
+    # Ansible Tower Password
+    ansible-tower-pass: 
+    # Ansible Tower URL
+    ansible-tower-url: 
+    # Extra vars required by the ansible playbook
+    additional-vars: 
+    # Template id on Ansible Tower
+    template-id: 
+    - name: Browser Platform Publisher
+  # You may pin to the exact commit or the version.
+  # uses: PlasmoHQ/bpp@ba887a93e8ed778819c630e0e943f06190e4545d
+  uses: PlasmoHQ/bpp@v3.5.0
+  with:
+    # A JSON string containing the keys to be used for the submission process. (This should be a secret)
+    keys: 
+    # The extension zip artifact to be published.
+    artifact: # optional
+    # This is an alias to artifact argument.
+    zip: # optional
+    # This is an alias to artifact argument.
+    file: # optional
+    # The path to the Chrome extension zip file.
+    chrome-file: # optional
+    # The path to the Firefox extension zip file.
+    firefox-file: # optional
+    # The path to the Edge extension zip file.
+    edge-file: # optional
+    # The path to the Opera extension zip file.
+    opera-file: # optional
+    # A release note cataloging changes. (Edge only)
+    notes: # optional
+    # This is an alias to notes argument.
+    edge-notes: # optional
+    # Print out more verbose logging.
+    verbose: # optional
+    # The path to a json file with a version field, default to package.json.
+    version-file: # optional
+    - name: Napptive Playground action
+  # You may pin to the exact commit or the version.
+  # uses: napptive-actions/playground-github-action@a92dd3dd4b1ebae448d263f90ee606543400dae3
+  uses: napptive-actions/playground-github-action@v6.0.2
+  with:
+    # Debug flag in commands
+    debug: # optional
+    # Command to execute
+    cmd: 
+    # To specify a target account/environment
+    environment: # optional
+    # To use a custom YAML file to change the target playground installation
+    playgroundConfigFile: # optional
+    - name: Execute Ansible Playbook
+  # You may pin to the exact commit or the version.
+  # uses: saubermacherag/ansible-playbook-docker-action@6504ab82647581a928477ecb9c6d52f11fc6843f
+  uses: saubermacherag/ansible-playbook-docker-action@v1.4
+  with:
+    # Name of the playbook in your workspace.
+    playbookName: 
+    # Name of the inventory file to use.
+    inventoryFile: # optional
+    # name of the requirements file to use.
+    requirementsFile: # optional
+    # If you use private github repositories in your requirements file you need to set galaxyGithubUser and galaxyGithub token.
+    galaxyGithubUser: # optional
+    # Token to access git source of roles to download. Only needed for private git sources. Github Account needs to be linked to Ansible Galaxy.
+    galaxyGithubToken: # optional
+    # If inventoryFile is set you can also specify a custom roles path to install your required roles in.
+    rolesPath: # optional
+    # Keyfile to use for host connections.
+    keyFile: # optional
+    # Vault Password to decrypt keyFile.
+    keyFileVaultPass: # optional
+    # String containing all extraVars which you want to be injected into the run.
+    extraVars: # optional
+    # File containing extra vars.
+    extraFile: # optional
+    # Choose one of 4 verbosity levels. See Ansible documentation for details.
+    verbosity: # optional
+    - name: Run Ansible playbook
+  # You may pin to the exact commit or the version.
+  # uses: dawidd6/action-ansible-playbook@5d970176ea4bfd99a3f5004d48e293fe0994eda1
+  uses: dawidd6/action-ansible-playbook@v2.6.1
+  with:
+    # Ansible playbook filepath
+    playbook: 
+    # Ansible Galaxy requirements filepath
+    requirements: # optional
+    # Root directory of Ansible project (defaults to current)
+    directory: # optional
+    # SSH private key used to connect to the host
+    key: # optional
+    # Custom content to write into hosts
+    inventory: # optional
+    # The password used for decrypting vaulted files
+    vault_password: # optional
+    # Contents of SSH known_hosts file
+    known_hosts: # optional
+    # Extra options that should be passed to ansible-playbook command
+    options: # optional
+    # Set to "true" if root is required for running your playbook
+    sudo: # optional
+    # Set to "true" if the Ansible output should not include colors (defaults to "false")
+    no_color: # optional
+    - name: vue cli plugin s3 deploy action new
+  # You may pin to the exact commit or the version.
+  # uses: hungbang/vue-cli-plugin-s3-deploy-action-new@bc26f9c2d09359c250fe78c434250f2a4cd75d8a
+  uses: hungbang/vue-cli-plugin-s3-deploy-action-new@v2.0
+    - name: Ready-to-use Ansible-Playbook environment
+  # You may pin to the exact commit or the version.
+  # uses: Sakul6499/GitHub-Action-Ansible@53c1a63195db6c2665016ab369d121f65f81a5aa
+  uses: Sakul6499/GitHub-Action-Ansible@v0.0.1
+  with:
+    # The main Ansible-Playbook file (your root file)
+    playbook_file: 
+    # The Ansible inventory file (list your target hosts in here)
+    inventory_file: 
+    # The Ansible requirements file (list your non-`buildin` modules here)
+    requirements_file: # optional
+    # The working directory for the LaTeX engine
+    working_directory: # optional
+    # Arguments parsed to the LaTeX compiler
+    additional_arguments: # optional, default is -vv
+    # Shell commands to execute _BEFORE_ executing the Ansible-Playbook
+    pre_task: # optional
+    # Shell commands to execute _AFTER_ executing the Ansible-Playbook
+    post_task: # optional
+    - name: Packer Build w/ AWS Session Manager plugin
+  # You may pin to the exact commit or the version.
+  # uses: forged-concepts/packer-build-action@952be60411aa10b6409a8c79de3b21e69847fd7e
+  uses: forged-concepts/packer-build-action@v1.2
+  with:
+    # a packer template file for packer build
+    templatefile: # default is packer.json
+    # a packer var file for packer build
+    varfile: # optional
+    # list of options for packer build
+    options: # optional
+    # a directory where the packer template lives
+    workingdirectory: # optional, default is .
+    - name: vue cli plugin s3 deploy next action
+  # You may pin to the exact commit or the version.
+  # uses: techouse/vue-cli-plugin-s3-deploy-action-next@1fac3be02309d496e7711805115da8f75148c5c2
+  uses: techouse/vue-cli-plugin-s3-deploy-action-next@v1.0.0
+  - name: Plain dotenv input parser Github action
+  # You may pin to the exact commit or the version.
+  # uses: luizfelipelaviola/parse-plain-dotenv@28a3cd5dfde74169c52967712f14daea097f18a0
+  uses: luizfelipelaviola/parse-plain-dotenv@v1
+  with:
+    # The doenv syntax string to be parsed
+    data: 
+    # Sets whether the action should pass the content to build environment
+    parse-env: # optional, default is true
+    # Sets whether the action should write a .env file with the content
+    write-env-file: # optional, default is false
+    # Sets the path of the .env file to be written
+    env-file-path: # optional, default is .env
+    - name: WordPress Plugin Readme/Assets Update
+  # You may pin to the exact commit or the version.
+  # uses: 10up/action-wordpress-plugin-asset-update@a807d08b98c588b6a39376bfe17bc74faa5f51a2
+  uses: 10up/action-wordpress-plugin-asset-update@2.1.1
+  - name: Build and publish multi platform Docker images
+  # You may pin to the exact commit or the version.
+  # uses: dawidd6/action-docker-publish-changed@20bfe42234027c40173c87e255ed7df97ba18a81
+  uses: dawidd6/action-docker-publish-changed@v3.0.1
+  with:
+    # GitHub token
+    token: # optional, default is ${{github.token}}
+    # DockerHub username
+    username: # optional
+    # DockerHub password
+    password: # optional
+    # Platforms for which the image will be built (comma separated)
+    platforms: # optional, default is linux/amd64
+    # Image tag
+    tag: # optional, default is latest
+    - name: Open edX Tutor k8s build Micro Front-end (MFE) plugin
+  # You may pin to the exact commit or the version.
+  # uses: openedx-actions/tutor-plugin-build-mfe@b2bdd2499bfb2274c1b43f47ee7ba357bd6b199b
+  uses: openedx-actions/tutor-plugin-build-mfe@v0.1.7
+  with:
+    # www
+    subdomain: 
+    # example.com
+    domain-name: 
+    # University of the Galaxy
+    site-name: 
+    # The name of the repository inside your AWS Elastic Container Registry (ECR) in which the newly created container will be uploaded and tagged. Defaults to "openedx_mfe"
+    aws-ecr-repository: # optional, default is openedx_mfe
+    - name: Open edX Tutor k8s enable Micro Front-end (MFE) plugin
+  # You may pin to the exact commit or the version.
+  # uses: openedx-actions/tutor-plugin-enable-mfe@63d3dc44902a846dfd69faefc6ab17a748ad6f3a
+  uses: openedx-actions/tutor-plugin-enable-mfe@v0.0.1
+  with:
+    # The URI for the AWS ECR repository. Example: 621672204142.dkr.ecr.us-east-2.amazonaws.com/openedx_mfe:latest
+    aws-ecr-uri: 
+    - name: Open edX Tutor k8s enable Backup plugin
+  # You may pin to the exact commit or the version.
+  # uses: openedx-actions/tutor-plugin-enable-backup@3d47da0243fddf7664d4ae7ddf3bbd858cc095fc
+  uses: openedx-actions/tutor-plugin-enable-backup@v0.0.12
+  with:
+    # The URI for the AWS ECR repository. Example: 621672204142.dkr.ecr.us-east-2.amazonaws.com/openedx_backup:latest
+    aws-ecr-uri: 
+    # The Kubernetes namespace to which the Open edX platform environment will be deployed. Example: openedx-prod
+    namespace: 
+    - name: Run Ansible playbook (with AWS support)
+  # You may pin to the exact commit or the version.
+  # uses: maurete/ansible-action@48e4301a78df1a4871d244d2740389cc6830e211
+  uses: maurete/ansible-action@v2
+  with:
+    # Name of the playbook to execute.
+    playbook: 
+    # Extra arguments for the playbook.
+    arguments: # optional
+    # Extra variables for the playbook in YAML syntax.
+    extra_vars_yaml: # optional
+    # Working directory.
+    working_directory: # optional
+    # AWS Access Key ID.
+    aws_access_key_id: # optional
+    # AWS Secret Access Key.
+    aws_secret_access_key: # optional
+    # AWS Session Token
+    aws_session_token: # optional
+    # AWS Region, e.g. us-east-1
+    aws_region: # optional
+    - name: tw5-plugin-packer
+  # You may pin to the exact commit or the version.
+  # uses: tiddly-gittly/tw5-plugin-packer@435e61877ed262eb42832f7232dd86919ebc6377
+  uses: tiddly-gittly/tw5-plugin-packer@v0.0.13
+  with:
+    # The root directory of your plugin. You can add multiple paths in the form of one per line.
+    source: 
+    # The output path of the packed plugin files, default to "output".
+    output: # optional, default is output
+    # Wheter to minify js and css tiddlers, default to "true".
+    minify: # optional, default is true
+    # JSON string of options for UglifyJS. See readme for default values.
+    uglifyjs-options: # optional, default is 
+    # JSON string of options for CleanCSS. See readme for default values.
+    cleancss-options: # optional, default is 
+    
+    
+    
+    
